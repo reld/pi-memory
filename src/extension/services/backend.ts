@@ -15,6 +15,7 @@ import type { RecallMemoriesResult } from "../types/recall.ts";
 import type { SearchSessionsResult } from "../types/session-search.ts";
 import type { ForgetMemoryResult } from "../types/forget.ts";
 import type { RememberMemoryResult } from "../types/remember.ts";
+import type { RebuildProjectMemoryResult } from "../types/rebuild.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const projectRoot = resolve(here, "../../..");
@@ -146,6 +147,16 @@ export async function rememberMemory(payload: {
   text: string;
 }): Promise<RememberMemoryResult> {
   return callBackend<RememberMemoryResult>({ version: 1, command: "remember_memory", payload });
+}
+
+export async function rebuildProjectMemory(payload: {
+  projectPath: string;
+  storageBaseDir: string;
+  sessionDir?: string;
+  trigger?: string;
+  activeSessionFile?: string;
+}): Promise<RebuildProjectMemoryResult> {
+  return callBackend<RebuildProjectMemoryResult>({ version: 1, command: "rebuild_project_memory", payload });
 }
 
 async function resolveBackendPath(): Promise<string> {

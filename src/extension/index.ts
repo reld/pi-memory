@@ -1,4 +1,4 @@
-import { BackendError, forgetMemory, getProjectStatus, ingestSessions, initProject, listMemories, recallMemories, rememberMemory, searchMemories, searchSessions } from "./services/backend.ts";
+import { BackendError, forgetMemory, getProjectStatus, ingestSessions, initProject, listMemories, recallMemories, rebuildProjectMemory, rememberMemory, searchMemories, searchSessions } from "./services/backend.ts";
 import { resolveRuntimeBehaviorConfig } from "./services/config.ts";
 import { resolveProjectContext } from "./services/project.ts";
 import { formatStatusBlock } from "./util/formatting.ts";
@@ -277,6 +277,42 @@ export default function createPiMemoryExtension(pi: any) {
         );
       } catch (error) {
         handleError(ctx, error, "Failed to remember Pi memory.");
+      }
+    },
+  });
+
+  pi.registerCommand("pi-memory-rebuild", {
+    description: "Rebuild derived project memory by clearing and re-ingesting sessions",
+    handler: async (_args: string, ctx: any) => {
+      const { projectPath, storageBaseDir } = resolveProjectContext(ctx.cwd);
+
+      try {
+        const result = await rebuildProjectMemory({
+          projectPath,
+          storageBaseDir,
+          sessionDir: process.env.PI_MEMORY_SESSION_DIR,
+          trigger: "manual",
+          activeSessionFile: ctx.sessionManager?.getSessionFile?.(),
+        });
+        ctx.ui?.notify?.(
+          formatStatusBlock("Pi Memory rebuild complete", [
+            `cleared memory sources: ${result.clearedMemorySources}`,
+            `cleared memory items: ${result.clearedMemoryItems}`,
+            `cleared ingestion state: ${result.clearedIngestionState}`,
+            `cleared ingestion runs: ${result.clearedIngestionRuns}`,
+            `run id: ${result.ingest.runId}`,
+            `tracked sessions discovered: ${result.ingest.trackedSessionsDiscovered}`,
+            `session files processed: ${result.ingest.sessionFilesProcessed}`,
+            `entries seen: ${result.ingest.entriesSeen}`,
+            `candidates found: ${result.ingest.candidatesFound}`,
+            `memories created: ${result.ingest.memoriesCreated}`,
+            `memories updated: ${result.ingest.memoriesUpdated}`,
+            `memories ignored: ${result.ingest.memoriesIgnored}`,
+          ]),
+          "info",
+        );
+      } catch (error) {
+        handleError(ctx, error, "Failed to rebuild Pi memory.");
       }
     },
   });

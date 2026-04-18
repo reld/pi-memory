@@ -160,6 +160,33 @@ func dispatch(req api.Request) api.Response {
 			return api.Failure("INGEST_FAILED", err.Error(), nil)
 		}
 		return api.Success(result)
+	case "rebuild_project_memory":
+		payload, fail := decodeIngestPayload(req.Payload)
+		if fail != nil {
+			return *fail
+		}
+		projectResult, err := projects.Get(payload.ProjectPath, payload.StorageBaseDir)
+		if err != nil {
+			return api.Failure("PROJECT_LOOKUP_FAILED", err.Error(), nil)
+		}
+		if !projectResult.Initialized || projectResult.Project == nil {
+			return api.Failure("PROJECT_NOT_INITIALIZED", "Project is not initialized", nil)
+		}
+		sqldb, err := db.Open(projectResult.Project.DBPath)
+		if err != nil {
+			return api.Failure("DB_ERROR", err.Error(), nil)
+		}
+		defer sqldb.Close()
+		result, err := sessions.Rebuild(sqldb, sessions.IngestInput{
+			Project:           projectResult.Project,
+			SessionDir:        payload.SessionDir,
+			Trigger:           defaultTrigger(payload.Trigger),
+			ActiveSessionFile: payload.ActiveSessionFile,
+		})
+		if err != nil {
+			return api.Failure("INGEST_FAILED", err.Error(), nil)
+		}
+		return api.Success(result)
 	case "list_memories":
 		payload, fail := decodeListMemoriesPayload(req.Payload)
 		if fail != nil {
