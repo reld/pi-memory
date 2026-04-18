@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"time"
 
 	"pi-memory/internal/api"
 	"pi-memory/internal/db"
@@ -78,11 +79,18 @@ func main() {
 
 	var req api.Request
 	if err := json.Unmarshal(input, &req); err != nil {
+		debugLogf("invalid request json: %v", err)
 		_ = json.NewEncoder(os.Stdout).Encode(api.Failure("INVALID_REQUEST", "Failed to parse request JSON", nil))
 		return
 	}
 
+	debugLogf("command=%s version=%d", req.Command, req.Version)
 	resp := dispatch(req)
+	if resp.OK {
+		debugLogf("command=%s ok", req.Command)
+	} else if resp.Error != nil {
+		debugLogf("command=%s error code=%s message=%s", req.Command, resp.Error.Code, resp.Error.Message)
+	}
 	if err := json.NewEncoder(os.Stdout).Encode(resp); err != nil {
 		writeProcessError("WRITE_STDOUT_FAILED", err)
 		os.Exit(1)
@@ -447,4 +455,16 @@ func responsePtr(resp api.Response) *api.Response {
 
 func writeProcessError(code string, err error) {
 	_, _ = fmt.Fprintf(os.Stderr, "%s: %v\n", code, err)
+}
+
+func debugLogf(format string, args ...any) {
+	if !debugEnabled() {
+		return
+	}
+	_, _ = fmt.Fprintf(os.Stderr, "[%s] pi-memory: %s\n", time.Now().UTC().Format(time.RFC3339), fmt.Sprintf(format, args...))
+}
+
+func debugEnabled() bool {
+	value := os.Getenv("PI_MEMORY_DEBUG")
+	return value == "1" || value == "true" || value == "TRUE" || value == "yes" || value == "on"
 }

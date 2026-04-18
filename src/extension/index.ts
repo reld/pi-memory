@@ -22,7 +22,7 @@ export default function createPiMemoryExtension(pi: any) {
           projectPath,
           storageBaseDir,
           trigger: "session_start_catchup",
-          sessionDir: process.env.PI_MEMORY_SESSION_DIR,
+          sessionDir: runtimeConfig.sessionDirOverride,
           activeSessionFile: ctx.sessionManager?.getSessionFile?.(),
         });
       }
@@ -59,7 +59,7 @@ export default function createPiMemoryExtension(pi: any) {
         projectPath,
         storageBaseDir,
         trigger: "auto_turn",
-        sessionDir: process.env.PI_MEMORY_SESSION_DIR,
+        sessionDir: runtimeConfig.sessionDirOverride,
         activeSessionFile: ctx.sessionManager?.getSessionFile?.(),
       });
     } catch (error) {
@@ -110,9 +110,14 @@ export default function createPiMemoryExtension(pi: any) {
           formatStatusBlock("Pi Memory status", [
             `project id: ${status.projectId ?? "unknown"}`,
             `db path: ${status.dbPath ?? "unknown"}`,
+            `storage base dir: ${storageBaseDir}`,
+            `session dir override: ${runtimeConfig.sessionDirOverride ?? "default"}`,
             `active memories: ${status.activeMemoryCount}`,
             `tracked sessions: ${status.trackedSessionCount}`,
             `last ingested at: ${status.lastIngestedAt || "never"}`,
+            `auto ingest: ${runtimeConfig.autoIngest ? "on" : "off"}`,
+            `auto recall: ${runtimeConfig.autoRecall ? "on" : "off"}`,
+            `raw session search: ${runtimeConfig.rawSessionSearchEnabled ? "on" : "off"}`,
           ]),
           "info",
         );
@@ -132,7 +137,7 @@ export default function createPiMemoryExtension(pi: any) {
           projectPath,
           storageBaseDir,
           trigger: "manual",
-          sessionDir: process.env.PI_MEMORY_SESSION_DIR,
+          sessionDir: runtimeConfig.sessionDirOverride,
         });
 
         ctx.ui?.notify?.(
@@ -200,11 +205,16 @@ export default function createPiMemoryExtension(pi: any) {
 
       const { projectPath, storageBaseDir } = resolveProjectContext(ctx.cwd);
 
+      if (!runtimeConfig.rawSessionSearchEnabled) {
+        ctx.ui?.notify?.("Raw session search is disabled by configuration.", "info");
+        return;
+      }
+
       try {
         const result = await searchSessions({
           projectPath,
           storageBaseDir,
-          sessionDir: process.env.PI_MEMORY_SESSION_DIR,
+          sessionDir: runtimeConfig.sessionDirOverride,
           query,
           limit: 20,
         });
@@ -290,7 +300,7 @@ export default function createPiMemoryExtension(pi: any) {
         const result = await rebuildProjectMemory({
           projectPath,
           storageBaseDir,
-          sessionDir: process.env.PI_MEMORY_SESSION_DIR,
+          sessionDir: runtimeConfig.sessionDirOverride,
           trigger: "manual",
           activeSessionFile: ctx.sessionManager?.getSessionFile?.(),
         });
@@ -320,7 +330,10 @@ export default function createPiMemoryExtension(pi: any) {
 
 function handleError(ctx: any, error: unknown, fallbackMessage: string) {
   if (error instanceof BackendError) {
-    ctx.ui?.notify?.(`${fallbackMessage} [${error.code}] ${error.message}`, "error");
+    const stderr = typeof error.details?.stderr === "string" && error.details.stderr.trim()
+      ? `\nstderr: ${error.details.stderr.trim()}`
+      : "";
+    ctx.ui?.notify?.(`${fallbackMessage} [${error.code}] ${error.message}${stderr}`, "error");
     return;
   }
   if (error instanceof Error) {

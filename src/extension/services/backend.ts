@@ -16,6 +16,7 @@ import type { SearchSessionsResult } from "../types/session-search.ts";
 import type { ForgetMemoryResult } from "../types/forget.ts";
 import type { RememberMemoryResult } from "../types/remember.ts";
 import type { RebuildProjectMemoryResult } from "../types/rebuild.ts";
+import { resolveRuntimeBehaviorConfig } from "./config.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const projectRoot = resolve(here, "../../..");
@@ -55,11 +56,24 @@ export class BackendError extends Error {
 
 export async function callBackend<Result>(request: BackendRequest): Promise<Result> {
   const backendPath = await resolveBackendPath();
-  const stdout = await runBackend(backendPath, JSON.stringify(request));
+  const { stdout, stderr } = await runBackend(backendPath, JSON.stringify(request));
 
-  const response = JSON.parse(stdout) as BackendResponse<Result>;
+  let response: BackendResponse<Result>;
+  try {
+    response = JSON.parse(stdout) as BackendResponse<Result>;
+  } catch (error) {
+    throw new BackendError(
+      "BACKEND_INVALID_RESPONSE",
+      error instanceof Error ? `Failed to parse backend response: ${error.message}` : "Failed to parse backend response",
+      { stdout, stderr },
+    );
+  }
+
   if (!response.ok) {
-    throw new BackendError(response.error.code, response.error.message, response.error.details);
+    throw new BackendError(response.error.code, response.error.message, {
+      ...response.error.details,
+      ...(stderr.trim() ? { stderr: stderr.trim() } : {}),
+    });
   }
   return response.result;
 }
@@ -160,7 +174,8 @@ export async function rebuildProjectMemory(payload: {
 }
 
 async function resolveBackendPath(): Promise<string> {
-  const override = process.env.PI_MEMORY_BACKEND_PATH?.trim();
+  const runtimeConfig = resolveRuntimeBehaviorConfig();
+  const override = runtimeConfig.backendPathOverride;
   if (override) {
     await assertExecutable(override);
     return override;
@@ -219,11 +234,16 @@ function binaryName(): string {
   return process.platform === "win32" ? "pi-memory-backend.exe" : "pi-memory-backend";
 }
 
-function runBackend(binaryPath: string, input: string): Promise<string> {
+function runBackend(binaryPath: string, input: string): Promise<{ stdout: string; stderr: string }> {
   return new Promise((resolvePromise, reject) => {
+    const runtimeConfig = resolveRuntimeBehaviorConfig();
     const child = spawn(binaryPath, [], {
       cwd: projectRoot,
       stdio: ["pipe", "pipe", "pipe"],
+      env: {
+        ...process.env,
+        PI_MEMORY_DEBUG: runtimeConfig.debug ? "1" : (process.env.PI_MEMORY_DEBUG ?? ""),
+      },
     });
 
     let stdout = "";
@@ -243,10 +263,10 @@ function runBackend(binaryPath: string, input: string): Promise<string> {
 
     child.on("close", (code) => {
       if (code === 0) {
-        resolvePromise(stdout);
+        resolvePromise({ stdout, stderr });
         return;
       }
-      reject(new BackendError("BACKEND_PROCESS_FAILED", stderr.trim() || `Backend exited with code ${code}`));
+      reject(new BackendError("BACKEND_PROCESS_FAILED", stderr.trim() || `Backend exited with code ${code}`, { stdout, stderr, code }));
     });
 
     child.stdin.write(input);

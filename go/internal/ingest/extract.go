@@ -135,7 +135,7 @@ func taskCandidate(sessionFile string, entry SessionEntry, text string) (memorie
 	for _, pattern := range patterns {
 		if containsFold(text, pattern) {
 			summary := extractSummaryFromPattern(text, pattern)
-			if !isUsefulSummary(summary) {
+			if !isUsefulTaskSummary(summary) {
 				return memories.Candidate{}, false
 			}
 			return candidateFromSummary(sessionFile, entry, "task", summary, text, 0.76, 0.62), true
@@ -145,14 +145,17 @@ func taskCandidate(sessionFile string, entry SessionEntry, text string) (memorie
 }
 
 func factCandidate(sessionFile string, entry SessionEntry, text string) (memories.Candidate, bool) {
-	patterns := []string{"this project is", "we are building", "it will include", "one db per project", "one sqlite database per project", "sqlite db per project"}
+	patterns := []string{"this project is", "we are building", "it will include", "one db per project", "one sqlite database per project", "sqlite db per project", "pi package", "typescript pi extension", "go backend", "as little tokens as possible", "algorithmic", "ingestion would be"}
 	for _, pattern := range patterns {
 		if containsFold(text, pattern) {
-			summary := extractSummaryFromPattern(text, pattern)
+			summary := normalizeFactSummary(text)
+			if summary == "" {
+				summary = extractSummaryFromPattern(text, pattern)
+			}
 			if !isUsefulSummary(summary) {
 				return memories.Candidate{}, false
 			}
-			return candidateFromSummary(sessionFile, entry, "fact", summary, text, 0.74, 0.68), true
+			return candidateFromSummary(sessionFile, entry, "fact", summary, text, 0.82, 0.78), true
 		}
 	}
 	return memories.Candidate{}, false
@@ -299,6 +302,35 @@ func bestSnippet(text string) string {
 	return text
 }
 
+func isUsefulTaskSummary(text string) bool {
+	if !isUsefulSummary(text) {
+		return false
+	}
+	lower := strings.ToLower(normalize(text))
+	weakPhrases := []string{
+		"come back to me",
+		"update thoughts",
+		"update todos",
+		"thoughts and todos",
+		"check the handoff",
+		"read the handoff",
+		"before we continue",
+		"continue where we left off",
+		"keep the model sharp",
+		"open ",
+		"read ",
+	}
+	for _, phrase := range weakPhrases {
+		if strings.Contains(lower, phrase) {
+			return false
+		}
+	}
+	if strings.HasPrefix(lower, "todos") || strings.HasPrefix(lower, "thoughts") {
+		return false
+	}
+	return true
+}
+
 func isUsefulSummary(text string) bool {
 	text = normalize(text)
 	if text == "" {
@@ -325,14 +357,49 @@ func shouldIgnoreForMemory(text string) bool {
 	if len(text) > 500 {
 		return true
 	}
-	if strings.Contains(lower, "open ") && strings.Contains(lower, ".md") && len(text) < 80 {
+	ignorePhrases := []string{
+		"check the handoff",
+		"read the handoff",
+		"come back to me",
+		"continue where we left off",
+		"keep the model sharp",
+		"update thoughts and todos",
+		"update our thoughts and todos",
+	}
+	for _, phrase := range ignorePhrases {
+		if strings.Contains(lower, phrase) {
+			return true
+		}
+	}
+	if strings.Contains(lower, "open ") && strings.Contains(lower, ".md") && len(text) < 120 {
 		return true
 	}
-	if strings.Contains(lower, "read ") && strings.Contains(lower, ".md") && len(text) < 80 {
-		return true
-	}
-	if strings.Contains(lower, "check the handoff") {
+	if strings.Contains(lower, "read ") && strings.Contains(lower, ".md") && len(text) < 120 {
 		return true
 	}
 	return false
+}
+
+func normalizeFactSummary(text string) string {
+	lower := strings.ToLower(text)
+	switch {
+	case strings.Contains(lower, "as little tokens as possible") && (strings.Contains(lower, "algorithmic") || strings.Contains(lower, "go backend")):
+		return "Keep ingestion low-token and primarily algorithmic in the Go backend"
+	case strings.Contains(lower, "ingestion would be") && strings.Contains(lower, "go backend"):
+		return "Use the Go backend for algorithmic ingestion"
+	case strings.Contains(lower, "pi package") && strings.Contains(lower, "go backend") && strings.Contains(lower, "typescript"):
+		return "This project is a Pi package with a TypeScript extension and a Go backend"
+	case strings.Contains(lower, "extension and the backend binary") && strings.Contains(lower, "pi package"):
+		return "This project is a Pi package with a TypeScript extension and a Go backend"
+	case strings.Contains(lower, "one sqlite") && strings.Contains(lower, "per project"):
+		return "Use one SQLite database per project"
+	case strings.Contains(lower, "sqlite db per project"):
+		return "Use one SQLite database per project"
+	case strings.Contains(lower, "one db per project"):
+		return "Use one database per project"
+	case strings.Contains(lower, "viteplus"):
+		return "Use VitePlus for TypeScript workflows in this project"
+	default:
+		return ""
+	}
 }

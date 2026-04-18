@@ -1,5 +1,4 @@
-import { homedir } from "node:os";
-import { join } from "node:path";
+import { resolveRuntimeBehaviorConfig } from "./config.ts";
 
 export interface ResolvedProjectContext {
   projectPath: string;
@@ -7,7 +6,7 @@ export interface ResolvedProjectContext {
 }
 
 export function resolveStorageBaseDir(): string {
-  return process.env.PI_MEMORY_STORAGE_BASE_DIR?.trim() || join(homedir(), ".pi-memory");
+  return resolveRuntimeBehaviorConfig().storageBaseDir;
 }
 
 export function resolveProjectContext(cwd: string): ResolvedProjectContext {
