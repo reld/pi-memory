@@ -37,10 +37,11 @@ func ExtractCandidates(sessionFile string, entry SessionEntry) []memories.Candid
 		return nil
 	}
 
-	candidates := make([]memories.Candidate, 0, 5)
 	if candidate, ok := explicitMemoryCandidate(sessionFile, entry, text); ok {
-		candidates = append(candidates, candidate)
+		return []memories.Candidate{candidate}
 	}
+
+	candidates := make([]memories.Candidate, 0, 5)
 	if candidate, ok := preferenceCandidate(sessionFile, entry, text); ok {
 		candidates = append(candidates, candidate)
 	}
@@ -63,29 +64,94 @@ func explicitMemoryCandidate(sessionFile string, entry SessionEntry, text string
 	phrases := []string{"remember this", "please remember", "note this", "remember that"}
 	for _, phrase := range phrases {
 		if containsFold(text, phrase) {
-			summary := cleanupAfterPhrase(text, phrase)
-			summary = bestSnippet(summary)
-			if !isUsefulSummary(summary) {
-				summary = bestSnippet(text)
-			}
-			if !isUsefulSummary(summary) {
-				return memories.Candidate{}, false
-			}
-			return memories.Candidate{
-				Category:    classifyExplicit(summary),
-				Summary:     sentence(summary),
-				Details:     text,
-				SourceType:  "explicit_user",
-				Confidence:  0.95,
-				Importance:  0.90,
-				EntryID:     entry.ID,
-				EntryRole:   entry.Message.Role,
-				Excerpt:     sentence(text),
-				SessionFile: sessionFile,
-			}, true
+			return explicitCandidateFromPhrase(sessionFile, entry, text, phrase)
 		}
 	}
+
+	if summary, ok := leadingRememberSummary(text); ok {
+		return memories.Candidate{
+			Category:    classifyExplicit(summary),
+			Summary:     sentence(summary),
+			Details:     text,
+			SourceType:  "explicit_user",
+			Confidence:  0.98,
+			Importance:  0.95,
+			EntryID:     entry.ID,
+			EntryRole:   entry.Message.Role,
+			Excerpt:     sentence(text),
+			SessionFile: sessionFile,
+		}, true
+	}
+
 	return memories.Candidate{}, false
+}
+
+func explicitCandidateFromPhrase(sessionFile string, entry SessionEntry, text, phrase string) (memories.Candidate, bool) {
+	summary := cleanupAfterPhrase(text, phrase)
+	summary = bestSnippet(summary)
+	if !isUsefulSummary(summary) {
+		summary = bestSnippet(text)
+	}
+	if !isUsefulSummary(summary) {
+		return memories.Candidate{}, false
+	}
+	return memories.Candidate{
+		Category:    classifyExplicit(summary),
+		Summary:     sentence(summary),
+		Details:     text,
+		SourceType:  "explicit_user",
+		Confidence:  0.95,
+		Importance:  0.90,
+		EntryID:     entry.ID,
+		EntryRole:   entry.Message.Role,
+		Excerpt:     sentence(text),
+		SessionFile: sessionFile,
+	}, true
+}
+
+func leadingRememberSummary(text string) (string, bool) {
+	segments := splitIntoSegments(text)
+	for _, segment := range segments {
+		normalized := normalize(segment)
+		lower := strings.ToLower(normalized)
+		if lower == "" {
+			continue
+		}
+		if strings.HasPrefix(lower, "do you remember") || strings.HasPrefix(lower, "remember what ") || strings.HasPrefix(lower, "remember when ") {
+			continue
+		}
+		if !(strings.HasPrefix(lower, "remember ") || strings.HasPrefix(lower, "please remember ")) {
+			continue
+		}
+
+		phrase := "remember"
+		if strings.HasPrefix(lower, "please remember ") {
+			phrase = "please remember"
+		}
+
+		summary := cleanupAfterPhrase(normalized, phrase)
+		summary = strings.TrimLeft(summary, ",:- ")
+		summary = bestSnippet(summary)
+		if !isUsefulSummary(summary) {
+			continue
+		}
+		return summary, true
+	}
+	return "", false
+}
+
+func splitIntoSegments(text string) []string {
+	replacer := strings.NewReplacer("?", ".", "!", ".", "\n", ".")
+	normalized := replacer.Replace(text)
+	parts := strings.Split(normalized, ".")
+	segments := make([]string, 0, len(parts))
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		if part != "" {
+			segments = append(segments, part)
+		}
+	}
+	return segments
 }
 
 func preferenceCandidate(sessionFile string, entry SessionEntry, text string) (memories.Candidate, bool) {

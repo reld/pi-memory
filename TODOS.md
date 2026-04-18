@@ -12,7 +12,7 @@
 - [x] Define the MVP scope
 - [x] Define what counts as a memory item
 - [x] Define memory categories
-- [ ] Define project scoping rules
+- [x] Define project scoping rules
 - [ ] Define privacy and control principles
 - [x] Define success criteria for the MVP
 
@@ -23,8 +23,8 @@
 - [x] Define responsibilities of the Go side
 - [x] Define the communication boundary between TS and Go
 - [x] Decide whether communication is CLI-based, JSON-over-stdio, or local RPC
-- [ ] Define error handling between extension and binary
-- [ ] Define logging and debug strategy
+- [x] Define error handling between extension and binary
+- [x] Define logging and debug strategy
 - [x] Define configuration model
 
 ## Phase 2 — Project identity and storage layout
@@ -65,6 +65,7 @@
 - [x] Define automatic ingestion trigger after completed assistant turns
 - [x] Define catch-up ingestion behavior on session start
 - [x] Define explicit user-triggered memory capture behavior
+- [x] Promote plain conversational `remember ...` to near-explicit memory capture
 - [x] Define extraction rules for candidate memories
 - [x] Define deterministic scoring/filtering rules for memory candidates
 - [x] Define deduplication strategy
@@ -104,7 +105,7 @@
 
 - [x] Create Go module
 - [x] Define binary interface contract
-- [ ] Implement config loading
+- [ ] Decide whether backend needs independent config loading beyond TS-provided payload/env
 - [x] Implement DB initialization
 - [x] Implement migrations
 - [x] Implement ingestion bookkeeping
@@ -118,8 +119,8 @@
 ## Phase 8 — TypeScript extension
 
 - [x] Create extension scaffold
-- [~] Add config loading/resolution
-- [ ] Add setup command
+- [x] Add config loading/resolution
+- [x] Add setup command
 - [x] Add project DB resolution
 - [x] Add Go binary invocation wrapper
 - [x] Add ingestion command(s)
@@ -127,7 +128,7 @@
 - [x] Add memory management command(s)
 - [x] Add session lifecycle hooks
 - [x] Add initial LLM-callable memory tools for on-demand retrieval
-- [~] Add user-facing notifications and errors
+- [~] Polish user-facing notifications and errors
 
 ## Phase 9 — Packaging and distribution
 
@@ -153,6 +154,7 @@
 - [~] Test extension/binary failure modes
 - [ ] Test packaging on target platforms
 - [x] Verify backend recall returns expected memories for the real project DB
+- [x] Validate natural-language `remember ...` promotion into structured memory
 
 ## Immediate next tasks
 

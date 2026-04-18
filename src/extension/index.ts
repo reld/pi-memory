@@ -112,6 +112,7 @@ export default function createPiMemoryExtension(pi: any) {
     promptSnippet: "Search structured project memories",
     promptGuidelines: [
       "Use this for a specific remembered preference, decision, fact, task, or convention.",
+      "If this returns no relevant results and the user is asking about prior conversation details, immediately try pi_memory_search_sessions.",
     ],
     parameters: MEMORY_SEARCH_PARAMS,
     async execute(_toolCallId: string, params: { query: string; limit?: number }, _signal: AbortSignal | undefined, _onUpdate: unknown, ctx: any) {
@@ -139,6 +140,7 @@ export default function createPiMemoryExtension(pi: any) {
     promptSnippet: "Search raw tracked session history as a fallback",
     promptGuidelines: [
       "Use this only if structured memory is insufficient and the user asks about prior conversation details.",
+      "After an empty or clearly insufficient structured memory lookup for an explicit memory/history question, use this automatically instead of asking permission first.",
     ],
     parameters: SESSION_SEARCH_PARAMS,
     async execute(_toolCallId: string, params: { query: string; limit?: number }, _signal: AbortSignal | undefined, _onUpdate: unknown, ctx: any) {
