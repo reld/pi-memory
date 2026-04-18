@@ -25,3 +25,14 @@ https://github.com/badlogic/pi-mono/tree/main/packages/coding-agent#readme
 - Use `vp run <script>` (or `vpr <script>`) for package.json scripts instead of `npm run <script>` when appropriate.
 - Only fall back to raw `npm`/`npx` if `vp` cannot do the needed task or if there is a clear project-specific reason.
 
+## Git commit message instructions
+- When the user asks for a commit message, always provide:
+  1. a short commit title on its own line
+  2. a blank line
+  3. a bullet list summarizing the implemented features/changes
+- The commit title should be concise, descriptive, and scoped to the actual work completed.
+- The bullet list should focus on concrete implemented features/fixes, not generic statements.
+- Include enough detail to be useful in commit history, but keep it compact and readable.
+- Prefer imperative/conventional style titles when appropriate, e.g. `feat: add raw session search and memory commands`.
+- Unless the user asks otherwise, do not include extra commentary around the commit message; just provide the commit text ready to use.
+
