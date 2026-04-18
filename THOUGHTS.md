@@ -3548,6 +3548,48 @@ Likely memory categories:
 - unfinished tasks / follow-ups
 - constraints / conventions
 
+## Pi TUI extension/UI direction (later feature area)
+
+We confirmed that Pi extensions can render custom TUI components and overlays.
+The docs and examples show that we can build:
+
+- popups / overlays via `ctx.ui.custom(..., { overlay: true })`
+- persistent widgets above or below the editor via `ctx.ui.setWidget()`
+- status indicators via `ctx.ui.setStatus()`
+- custom footer/header UI
+- custom interactive components with keyboard handling
+- list selection UIs via built-in components like `SelectList`
+- settings/toggle UIs via `SettingsList`
+
+Relevant Pi docs/examples:
+- `docs/tui.md`
+- `examples/extensions/todo.ts`
+- `examples/extensions/widget-placement.ts`
+- `examples/extensions/overlay-test.ts`
+- `examples/extensions/tools.ts`
+- `examples/extensions/preset.ts`
+
+Potential Pi Memory UI ideas for later:
+- memory list popup / overlay
+- searchable memory picker
+- raw session search result viewer
+- memory detail inspector with source excerpts
+- small persistent status/widget showing memory state for the current project
+- optional settings panel for memory behavior
+
+Design principle for later:
+- keep the first UI additions lightweight and explicitly user-invoked
+- prefer overlays/widgets over a large always-on interface
+- keep memory inspection fast, inspectable, and low-noise
+
+## Later feature ideas to revisit
+
+Two larger ideas worth revisiting later:
+- a todo system inside `pi-memory`
+- a software design/spec concept inside `pi-memory`, inspired by how `THOUGHTS.md` is being used now
+
+These are intentionally deferred for now; core memory/retrieval quality still comes first.
+
 ## Open questions for later
 
 - Where exactly are this project's sessions being stored right now?
