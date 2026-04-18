@@ -10,6 +10,7 @@ import type {
   ProjectStatusResult,
 } from "../types/project.ts";
 import type { IngestSessionsResult } from "../types/ingest.ts";
+import type { ListMemoriesResult, SearchMemoriesResult } from "../types/memory.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const projectRoot = resolve(here, "../../..");
@@ -88,6 +89,24 @@ export async function ingestSessions(payload: {
   activeSessionFile?: string;
 }): Promise<IngestSessionsResult> {
   return callBackend<IngestSessionsResult>({ version: 1, command: "ingest_sessions", payload });
+}
+
+export async function listMemories(payload: {
+  projectPath: string;
+  storageBaseDir: string;
+  status?: string;
+  limit?: number;
+}): Promise<ListMemoriesResult> {
+  return callBackend<ListMemoriesResult>({ version: 1, command: "list_memories", payload });
+}
+
+export async function searchMemories(payload: {
+  projectPath: string;
+  storageBaseDir: string;
+  query: string;
+  limit?: number;
+}): Promise<SearchMemoriesResult> {
+  return callBackend<SearchMemoriesResult>({ version: 1, command: "search_memories", payload });
 }
 
 async function resolveBackendPath(): Promise<string> {

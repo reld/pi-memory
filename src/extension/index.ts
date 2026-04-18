@@ -1,6 +1,7 @@
-import { BackendError, getProjectStatus, ingestSessions, initProject } from "./services/backend.ts";
+import { BackendError, getProjectStatus, ingestSessions, initProject, listMemories, searchMemories } from "./services/backend.ts";
 import { resolveProjectContext } from "./services/project.ts";
 import { formatStatusBlock } from "./util/formatting.ts";
+import { formatMemoryRows } from "./util/memory-formatting.ts";
 
 export default function createPiMemoryExtension(pi: any) {
   pi.registerCommand("pi-memory-init", {
@@ -87,6 +88,40 @@ export default function createPiMemoryExtension(pi: any) {
         );
       } catch (error) {
         handleError(ctx, error, "Failed to ingest Pi sessions.");
+      }
+    },
+  });
+
+  pi.registerCommand("pi-memory-list", {
+    description: "List stored Pi Memory items for the current project",
+    handler: async (_args: string, ctx: any) => {
+      const { projectPath, storageBaseDir } = resolveProjectContext(ctx.cwd);
+
+      try {
+        const result = await listMemories({ projectPath, storageBaseDir, status: "active", limit: 50 });
+        ctx.ui?.notify?.(formatMemoryRows("Pi Memory items", result.items), "info");
+      } catch (error) {
+        handleError(ctx, error, "Failed to list Pi memories.");
+      }
+    },
+  });
+
+  pi.registerCommand("pi-memory-search", {
+    description: "Search stored Pi Memory items for the current project",
+    handler: async (args: string, ctx: any) => {
+      const query = args.trim();
+      if (!query) {
+        ctx.ui?.notify?.("Usage: /pi-memory-search <query>", "info");
+        return;
+      }
+
+      const { projectPath, storageBaseDir } = resolveProjectContext(ctx.cwd);
+
+      try {
+        const result = await searchMemories({ projectPath, storageBaseDir, query, limit: 20 });
+        ctx.ui?.notify?.(formatMemoryRows(`Pi Memory search: ${query}`, result.items), "info");
+      } catch (error) {
+        handleError(ctx, error, "Failed to search Pi memories.");
       }
     },
   });

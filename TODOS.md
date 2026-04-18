@@ -111,7 +111,7 @@
 - [x] Implement algorithmic candidate extraction from session-derived input
 - [x] Implement deterministic candidate scoring/filtering
 - [x] Implement write operations for memory items
-- [ ] Implement search/query operations
+- [x] Implement search/query operations
 - [x] Implement structured JSON I/O for TS integration
 - [ ] Implement logging/debug output
 
@@ -123,7 +123,7 @@
 - [x] Add project DB resolution
 - [x] Add Go binary invocation wrapper
 - [x] Add ingestion command(s)
-- [ ] Add retrieval/search command(s)
+- [x] Add retrieval/search command(s)
 - [ ] Add memory management command(s)
 - [ ] Add session lifecycle hooks
 - [ ] Add user-facing notifications and errors
