@@ -9,6 +9,7 @@ import type {
   ProjectInitResult,
   ProjectStatusResult,
 } from "../types/project.ts";
+import type { IngestSessionsResult } from "../types/ingest.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const projectRoot = resolve(here, "../../..");
@@ -77,6 +78,16 @@ export async function getProjectStatus(payload: {
   storageBaseDir: string;
 }): Promise<ProjectStatusResult> {
   return callBackend<ProjectStatusResult>({ version: 1, command: "project_status", payload });
+}
+
+export async function ingestSessions(payload: {
+  projectPath: string;
+  storageBaseDir: string;
+  sessionDir?: string;
+  trigger?: string;
+  activeSessionFile?: string;
+}): Promise<IngestSessionsResult> {
+  return callBackend<IngestSessionsResult>({ version: 1, command: "ingest_sessions", payload });
 }
 
 async function resolveBackendPath(): Promise<string> {

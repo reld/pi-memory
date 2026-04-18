@@ -1,4 +1,4 @@
-import { BackendError, getProjectStatus, initProject } from "./services/backend.ts";
+import { BackendError, getProjectStatus, ingestSessions, initProject } from "./services/backend.ts";
 import { resolveProjectContext } from "./services/project.ts";
 import { formatStatusBlock } from "./util/formatting.ts";
 
@@ -54,6 +54,39 @@ export default function createPiMemoryExtension(pi: any) {
         );
       } catch (error) {
         handleError(ctx, error, "Failed to load Pi Memory status.");
+      }
+    },
+  });
+
+  pi.registerCommand("pi-memory-ingest", {
+    description: "Manually ingest Pi sessions for the current project",
+    handler: async (_args: string, ctx: any) => {
+      const { projectPath, storageBaseDir } = resolveProjectContext(ctx.cwd);
+
+      try {
+        const result = await ingestSessions({
+          projectPath,
+          storageBaseDir,
+          trigger: "manual",
+          sessionDir: process.env.PI_MEMORY_SESSION_DIR,
+        });
+
+        ctx.ui?.notify?.(
+          formatStatusBlock("Pi Memory ingest complete", [
+            `run id: ${result.runId}`,
+            `tracked sessions discovered: ${result.trackedSessionsDiscovered}`,
+            `session files processed: ${result.sessionFilesProcessed}`,
+            `entries seen: ${result.entriesSeen}`,
+            `candidates found: ${result.candidatesFound}`,
+            `memories created: ${result.memoriesCreated}`,
+            `memories updated: ${result.memoriesUpdated}`,
+            `memories ignored: ${result.memoriesIgnored}`,
+            `last ingested at: ${result.lastIngestedAt || "never"}`,
+          ]),
+          "info",
+        );
+      } catch (error) {
+        handleError(ctx, error, "Failed to ingest Pi sessions.");
       }
     },
   });

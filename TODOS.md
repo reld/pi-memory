@@ -102,17 +102,17 @@
 
 ## Phase 7 — Go backend
 
-- [ ] Create Go module
+- [x] Create Go module
 - [x] Define binary interface contract
 - [ ] Implement config loading
 - [x] Implement DB initialization
 - [x] Implement migrations
-- [ ] Implement ingestion bookkeeping
-- [ ] Implement algorithmic candidate extraction from session-derived input
-- [ ] Implement deterministic candidate scoring/filtering
-- [ ] Implement write operations for memory items
+- [x] Implement ingestion bookkeeping
+- [x] Implement algorithmic candidate extraction from session-derived input
+- [x] Implement deterministic candidate scoring/filtering
+- [x] Implement write operations for memory items
 - [ ] Implement search/query operations
-- [ ] Implement structured JSON I/O for TS integration
+- [x] Implement structured JSON I/O for TS integration
 - [ ] Implement logging/debug output
 
 ## Phase 8 — TypeScript extension
@@ -122,7 +122,7 @@
 - [ ] Add setup command
 - [x] Add project DB resolution
 - [x] Add Go binary invocation wrapper
-- [ ] Add ingestion command(s)
+- [x] Add ingestion command(s)
 - [ ] Add retrieval/search command(s)
 - [ ] Add memory management command(s)
 - [ ] Add session lifecycle hooks
