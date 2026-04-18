@@ -42,10 +42,31 @@ type searchMemoriesPayload struct {
 	Limit          int    `json:"limit,omitempty"`
 }
 
+type searchSessionsPayload struct {
+	ProjectPath    string `json:"projectPath"`
+	StorageBaseDir string `json:"storageBaseDir"`
+	SessionDir     string `json:"sessionDir,omitempty"`
+	Query          string `json:"query"`
+	Limit          int    `json:"limit,omitempty"`
+}
+
 type recallMemoriesPayload struct {
 	ProjectPath    string `json:"projectPath"`
 	StorageBaseDir string `json:"storageBaseDir"`
 	Limit          int    `json:"limit,omitempty"`
+}
+
+type forgetMemoryPayload struct {
+	ProjectPath    string `json:"projectPath"`
+	StorageBaseDir string `json:"storageBaseDir"`
+	MemoryID       string `json:"memoryId"`
+	Mode           string `json:"mode,omitempty"`
+}
+
+type rememberMemoryPayload struct {
+	ProjectPath    string `json:"projectPath"`
+	StorageBaseDir string `json:"storageBaseDir"`
+	Text           string `json:"text"`
 }
 
 func main() {
@@ -184,6 +205,59 @@ func dispatch(req api.Request) api.Response {
 			return api.Failure("SEARCH_FAILED", err.Error(), nil)
 		}
 		return api.Success(map[string]any{"items": items})
+	case "search_sessions":
+		payload, fail := decodeSearchSessionsPayload(req.Payload)
+		if fail != nil {
+			return *fail
+		}
+		projectResult, response := openProjectDB(payload.ProjectPath, payload.StorageBaseDir)
+		if response != nil {
+			return *response
+		}
+		defer projectResult.DB.Close()
+		items, err := sessions.Search(projectResult.DB, sessions.SearchSessionsInput{
+			Project:    projectResult.Project,
+			SessionDir: payload.SessionDir,
+			Query:      payload.Query,
+			Limit:      payload.Limit,
+		})
+		if err != nil {
+			return api.Failure("SEARCH_FAILED", err.Error(), nil)
+		}
+		return api.Success(map[string]any{"items": items})
+	case "forget_memory":
+		payload, fail := decodeForgetMemoryPayload(req.Payload)
+		if fail != nil {
+			return *fail
+		}
+		projectResult, response := openProjectDB(payload.ProjectPath, payload.StorageBaseDir)
+		if response != nil {
+			return *response
+		}
+		defer projectResult.DB.Close()
+		result, err := memories.Forget(projectResult.DB, projectResult.Project.ProjectID, payload.MemoryID, payload.Mode)
+		if err != nil {
+			if err == memories.ErrMemoryNotFound {
+				return api.Failure("MEMORY_NOT_FOUND", err.Error(), nil)
+			}
+			return api.Failure("DB_ERROR", err.Error(), nil)
+		}
+		return api.Success(result)
+	case "remember_memory":
+		payload, fail := decodeRememberMemoryPayload(req.Payload)
+		if fail != nil {
+			return *fail
+		}
+		projectResult, response := openProjectDB(payload.ProjectPath, payload.StorageBaseDir)
+		if response != nil {
+			return *response
+		}
+		defer projectResult.DB.Close()
+		result, err := memories.Remember(projectResult.DB, projectResult.Project.ProjectID, payload.Text)
+		if err != nil {
+			return api.Failure("DB_ERROR", err.Error(), nil)
+		}
+		return api.Success(result)
 	default:
 		return api.Failure("COMMAND_NOT_IMPLEMENTED", fmt.Sprintf("Command %q is not implemented yet", req.Command), nil)
 	}
@@ -249,6 +323,57 @@ func decodeSearchMemoriesPayload(raw json.RawMessage) (*searchMemoriesPayload, *
 	}
 	if payload.Query == "" {
 		return nil, responsePtr(api.Failure("INVALID_QUERY", "query is required", nil))
+	}
+	return &payload, nil
+}
+
+func decodeSearchSessionsPayload(raw json.RawMessage) (*searchSessionsPayload, *api.Response) {
+	var payload searchSessionsPayload
+	if len(raw) == 0 {
+		return nil, responsePtr(api.Failure("INVALID_PAYLOAD", "Missing payload", nil))
+	}
+	if err := json.Unmarshal(raw, &payload); err != nil {
+		return nil, responsePtr(api.Failure("INVALID_PAYLOAD", "Failed to parse payload", nil))
+	}
+	if payload.ProjectPath == "" {
+		return nil, responsePtr(api.Failure("INVALID_PROJECT_PATH", "projectPath is required", nil))
+	}
+	if payload.Query == "" {
+		return nil, responsePtr(api.Failure("INVALID_QUERY", "query is required", nil))
+	}
+	return &payload, nil
+}
+
+func decodeRememberMemoryPayload(raw json.RawMessage) (*rememberMemoryPayload, *api.Response) {
+	var payload rememberMemoryPayload
+	if len(raw) == 0 {
+		return nil, responsePtr(api.Failure("INVALID_PAYLOAD", "Missing payload", nil))
+	}
+	if err := json.Unmarshal(raw, &payload); err != nil {
+		return nil, responsePtr(api.Failure("INVALID_PAYLOAD", "Failed to parse payload", nil))
+	}
+	if payload.ProjectPath == "" {
+		return nil, responsePtr(api.Failure("INVALID_PROJECT_PATH", "projectPath is required", nil))
+	}
+	if payload.Text == "" {
+		return nil, responsePtr(api.Failure("INVALID_TEXT", "text is required", nil))
+	}
+	return &payload, nil
+}
+
+func decodeForgetMemoryPayload(raw json.RawMessage) (*forgetMemoryPayload, *api.Response) {
+	var payload forgetMemoryPayload
+	if len(raw) == 0 {
+		return nil, responsePtr(api.Failure("INVALID_PAYLOAD", "Missing payload", nil))
+	}
+	if err := json.Unmarshal(raw, &payload); err != nil {
+		return nil, responsePtr(api.Failure("INVALID_PAYLOAD", "Failed to parse payload", nil))
+	}
+	if payload.ProjectPath == "" {
+		return nil, responsePtr(api.Failure("INVALID_PROJECT_PATH", "projectPath is required", nil))
+	}
+	if payload.MemoryID == "" {
+		return nil, responsePtr(api.Failure("INVALID_MEMORY_ID", "memoryId is required", nil))
 	}
 	return &payload, nil
 }

@@ -58,8 +58,10 @@ func UpsertCandidate(db *sql.DB, projectID string, candidate Candidate) (*Upsert
 		`, candidate.Details, candidate.Details, candidate.SourceType, candidate.Confidence, candidate.Confidence, candidate.Importance, candidate.Importance, now, existingID); err != nil {
 			return nil, err
 		}
-		if err := insertSource(db, existingID, candidate, now); err != nil {
-			return nil, err
+		if strings.TrimSpace(candidate.SessionFile) != "" {
+			if err := insertSource(db, existingID, candidate, now); err != nil {
+				return nil, err
+			}
 		}
 		return &UpsertOutcome{Updated: true}, nil
 	}
@@ -72,8 +74,10 @@ func UpsertCandidate(db *sql.DB, projectID string, candidate Candidate) (*Upsert
 	`, memoryID, projectID, candidate.Category, candidate.Summary, candidate.Details, statusOrDefault(candidate.Status), sourceTypeOrDefault(candidate.SourceType), candidate.Confidence, candidate.Importance, now, now); err != nil {
 		return nil, err
 	}
-	if err := insertSource(db, memoryID, candidate, now); err != nil {
-		return nil, err
+	if strings.TrimSpace(candidate.SessionFile) != "" {
+		if err := insertSource(db, memoryID, candidate, now); err != nil {
+			return nil, err
+		}
 	}
 	return &UpsertOutcome{Created: true}, nil
 }

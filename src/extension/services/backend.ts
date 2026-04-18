@@ -12,6 +12,9 @@ import type {
 import type { IngestSessionsResult } from "../types/ingest.ts";
 import type { ListMemoriesResult, SearchMemoriesResult } from "../types/memory.ts";
 import type { RecallMemoriesResult } from "../types/recall.ts";
+import type { SearchSessionsResult } from "../types/session-search.ts";
+import type { ForgetMemoryResult } from "../types/forget.ts";
+import type { RememberMemoryResult } from "../types/remember.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const projectRoot = resolve(here, "../../..");
@@ -116,6 +119,33 @@ export async function recallMemories(payload: {
   limit?: number;
 }): Promise<RecallMemoriesResult> {
   return callBackend<RecallMemoriesResult>({ version: 1, command: "recall_memories", payload });
+}
+
+export async function searchSessions(payload: {
+  projectPath: string;
+  storageBaseDir: string;
+  sessionDir?: string;
+  query: string;
+  limit?: number;
+}): Promise<SearchSessionsResult> {
+  return callBackend<SearchSessionsResult>({ version: 1, command: "search_sessions", payload });
+}
+
+export async function forgetMemory(payload: {
+  projectPath: string;
+  storageBaseDir: string;
+  memoryId: string;
+  mode?: "suppressed" | "forgotten";
+}): Promise<ForgetMemoryResult> {
+  return callBackend<ForgetMemoryResult>({ version: 1, command: "forget_memory", payload });
+}
+
+export async function rememberMemory(payload: {
+  projectPath: string;
+  storageBaseDir: string;
+  text: string;
+}): Promise<RememberMemoryResult> {
+  return callBackend<RememberMemoryResult>({ version: 1, command: "remember_memory", payload });
 }
 
 async function resolveBackendPath(): Promise<string> {

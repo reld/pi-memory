@@ -2,7 +2,9 @@
   "name": "pi-memory",
   "version": "0.1.0",
   "description": "Pi package providing per-project long-term memory with a TypeScript extension and Go backend.",
-  "keywords": ["pi-package"],
+  "keywords": [
+    "pi-package"
+  ],
   "license": "MIT",
   "type": "module",
   "files": [
@@ -30,6 +32,9 @@
     "typescript": "^5.9.3"
   },
   "pi": {
-    "extensions": ["./extensions"]
-  }
+    "extensions": [
+      "./extensions"
+    ]
+  },
+  "packageManager": "npm@11.12.1"
 }

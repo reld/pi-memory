@@ -31,8 +31,7 @@ func ExtractCandidates(sessionFile string, entry SessionEntry) []memories.Candid
 	if role != "user" && role != "assistant" {
 		return nil
 	}
-	text := extractText(entry.Message.Content)
-	text = normalize(text)
+	text := ExtractEntryText(entry)
 	if text == "" {
 		return nil
 	}
@@ -155,6 +154,14 @@ func baseCandidate(sessionFile string, entry SessionEntry, category, text string
 		Excerpt:     text,
 		SessionFile: sessionFile,
 	}
+}
+
+func ExtractEntryText(entry SessionEntry) string {
+	if entry.Message == nil {
+		return ""
+	}
+	text := extractText(entry.Message.Content)
+	return normalize(text)
 }
 
 func extractText(raw json.RawMessage) string {

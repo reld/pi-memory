@@ -180,7 +180,8 @@ func resolveSessionProjectDir(projectPath, sessionDirOverride string) (string, e
 	if err != nil {
 		return "", err
 	}
-	sessionFolder := "--" + strings.ReplaceAll(projectPath, string(filepath.Separator), "-") + "--"
+	normalizedProjectPath := strings.TrimPrefix(projectPath, string(filepath.Separator))
+	sessionFolder := "--" + strings.ReplaceAll(normalizedProjectPath, string(filepath.Separator), "-") + "--"
 	return filepath.Join(canonicalBaseDir, sessionFolder), nil
 }
 
@@ -336,5 +337,6 @@ func DebugProjectSessionDir(projectPath, sessionDirOverride string) (string, err
 }
 
 func ExplainProjectSessionDir(projectPath string) string {
-	return fmt.Sprintf("--%s--", strings.ReplaceAll(projectPath, string(filepath.Separator), "-"))
+	normalizedProjectPath := strings.TrimPrefix(projectPath, string(filepath.Separator))
+	return fmt.Sprintf("--%s--", strings.ReplaceAll(normalizedProjectPath, string(filepath.Separator), "-"))
 }

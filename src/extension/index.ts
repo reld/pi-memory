@@ -1,8 +1,9 @@
-import { BackendError, getProjectStatus, ingestSessions, initProject, listMemories, recallMemories, searchMemories } from "./services/backend.ts";
+import { BackendError, forgetMemory, getProjectStatus, ingestSessions, initProject, listMemories, recallMemories, rememberMemory, searchMemories, searchSessions } from "./services/backend.ts";
 import { resolveRuntimeBehaviorConfig } from "./services/config.ts";
 import { resolveProjectContext } from "./services/project.ts";
 import { formatStatusBlock } from "./util/formatting.ts";
 import { formatMemoryRows } from "./util/memory-formatting.ts";
+import { formatSessionSearchRows } from "./util/session-formatting.ts";
 
 export default function createPiMemoryExtension(pi: any) {
   const runtimeConfig = resolveRuntimeBehaviorConfig();
@@ -184,6 +185,98 @@ export default function createPiMemoryExtension(pi: any) {
         ctx.ui?.notify?.(formatMemoryRows(`Pi Memory search: ${query}`, result.items), "info");
       } catch (error) {
         handleError(ctx, error, "Failed to search Pi memories.");
+      }
+    },
+  });
+
+  pi.registerCommand("pi-memory-search-sessions", {
+    description: "Search raw Pi session history for the current project",
+    handler: async (args: string, ctx: any) => {
+      const query = args.trim();
+      if (!query) {
+        ctx.ui?.notify?.("Usage: /pi-memory-search-sessions <query>", "info");
+        return;
+      }
+
+      const { projectPath, storageBaseDir } = resolveProjectContext(ctx.cwd);
+
+      try {
+        const result = await searchSessions({
+          projectPath,
+          storageBaseDir,
+          sessionDir: process.env.PI_MEMORY_SESSION_DIR,
+          query,
+          limit: 20,
+        });
+        ctx.ui?.notify?.(formatSessionSearchRows(`Pi Memory raw session search: ${query}`, result.items), "info");
+      } catch (error) {
+        handleError(ctx, error, "Failed to search Pi sessions.");
+      }
+    },
+  });
+
+  pi.registerCommand("pi-memory-forget", {
+    description: "Suppress a stored Pi Memory item by memory id",
+    handler: async (args: string, ctx: any) => {
+      const memoryId = args.trim();
+      if (!memoryId) {
+        ctx.ui?.notify?.("Usage: /pi-memory-forget <memoryId>", "info");
+        return;
+      }
+
+      const { projectPath, storageBaseDir } = resolveProjectContext(ctx.cwd);
+
+      try {
+        const result = await forgetMemory({
+          projectPath,
+          storageBaseDir,
+          memoryId,
+          mode: "suppressed",
+        });
+        ctx.ui?.notify?.(
+          formatStatusBlock("Pi Memory item suppressed", [
+            `memory id: ${result.memoryId}`,
+            `status: ${result.status}`,
+            `updated at: ${result.updatedAt}`,
+          ]),
+          "info",
+        );
+      } catch (error) {
+        handleError(ctx, error, "Failed to forget Pi memory.");
+      }
+    },
+  });
+
+  pi.registerCommand("pi-memory-remember", {
+    description: "Store an explicit Pi Memory item for the current project",
+    handler: async (args: string, ctx: any) => {
+      const text = args.trim();
+      if (!text) {
+        ctx.ui?.notify?.("Usage: /pi-memory-remember <text>", "info");
+        return;
+      }
+
+      const { projectPath, storageBaseDir } = resolveProjectContext(ctx.cwd);
+
+      try {
+        const result = await rememberMemory({
+          projectPath,
+          storageBaseDir,
+          text,
+        });
+        ctx.ui?.notify?.(
+          formatStatusBlock(result.created ? "Pi Memory item saved" : "Pi Memory item updated", [
+            `memory id: ${result.memoryId}`,
+            `category: ${result.category}`,
+            `summary: ${result.summary}`,
+            `status: ${result.status}`,
+            `confidence: ${result.confidence.toFixed(2)}`,
+            `importance: ${result.importance.toFixed(2)}`,
+          ]),
+          "info",
+        );
+      } catch (error) {
+        handleError(ctx, error, "Failed to remember Pi memory.");
       }
     },
   });
