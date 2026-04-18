@@ -82,8 +82,8 @@
 - [x] Define how many memories can be surfaced at once
 - [x] Define how recalled memory is formatted for Pi
 - [x] Define safeguards against noisy or invasive recall
-- [ ] Define raw session search fallback behavior
-- [ ] Define project-scoped raw session search command(s)
+- [x] Define raw session search fallback behavior
+- [x] Define project-scoped raw session search command(s)
 - [ ] Decide whether to store our own session summaries/index later
 
 ## Phase 6 — Pi extension UX
@@ -94,7 +94,7 @@
 - [x] Define memory inspection commands
 - [x] Define memory edit/delete/forget commands
 - [x] Define ingestion commands
-- [~] Define custom tools exposed to the LLM
+- [x] Define initial custom tools exposed to the LLM (`pi_memory_recall`, `pi_memory_search`, `pi_memory_search_sessions`)
 - [x] Define what happens on session start
 - [x] Define what happens after completed assistant turns
 - [x] Define what happens on session shutdown
@@ -113,20 +113,21 @@
 - [x] Implement write operations for memory items
 - [x] Implement search/query operations
 - [x] Implement structured JSON I/O for TS integration
-- [ ] Implement logging/debug output
+- [x] Implement logging/debug output
 
 ## Phase 8 — TypeScript extension
 
 - [x] Create extension scaffold
-- [ ] Add config loading/resolution
+- [~] Add config loading/resolution
 - [ ] Add setup command
 - [x] Add project DB resolution
 - [x] Add Go binary invocation wrapper
 - [x] Add ingestion command(s)
 - [x] Add retrieval/search command(s)
-- [ ] Add memory management command(s)
+- [x] Add memory management command(s)
 - [x] Add session lifecycle hooks
-- [ ] Add user-facing notifications and errors
+- [x] Add initial LLM-callable memory tools for on-demand retrieval
+- [~] Add user-facing notifications and errors
 
 ## Phase 9 — Packaging and distribution
 
@@ -142,15 +143,16 @@
 
 ## Phase 10 — Testing and validation
 
-- [ ] Test project setup flow
-- [ ] Test DB creation in custom location
-- [ ] Test ingestion on real Pi sessions
-- [ ] Test duplicate prevention
-- [ ] Test retrieval relevance
-- [ ] Test project isolation
+- [x] Test project setup flow
+- [x] Test DB creation in custom location
+- [x] Test ingestion on real Pi sessions
+- [x] Test duplicate prevention
+- [~] Test retrieval relevance
+- [x] Test project isolation
 - [ ] Test rename/move edge cases
-- [ ] Test extension/binary failure modes
+- [~] Test extension/binary failure modes
 - [ ] Test packaging on target platforms
+- [x] Verify backend recall returns expected memories for the real project DB
 
 ## Immediate next tasks
 
@@ -174,3 +176,4 @@
 - [x] Implement TS backend wrapper
 - [x] Wire `/pi-memory-init`
 - [x] Wire `/pi-memory-status`
+- [x] Wire initial LLM-callable memory tools for on-demand retrieval

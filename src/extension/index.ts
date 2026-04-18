@@ -1,9 +1,25 @@
+import { Type } from "@sinclair/typebox";
+
 import { BackendError, forgetMemory, getProjectStatus, ingestSessions, initProject, listMemories, recallMemories, rebuildProjectMemory, rememberMemory, searchMemories, searchSessions } from "./services/backend.ts";
 import { resolveRuntimeBehaviorConfig } from "./services/config.ts";
 import { resolveProjectContext } from "./services/project.ts";
 import { formatStatusBlock } from "./util/formatting.ts";
 import { formatMemoryRows } from "./util/memory-formatting.ts";
 import { formatSessionSearchRows } from "./util/session-formatting.ts";
+
+const MEMORY_RECALL_PARAMS = Type.Object({
+  limit: Type.Optional(Type.Number({ minimum: 1, maximum: 20 })),
+});
+
+const MEMORY_SEARCH_PARAMS = Type.Object({
+  query: Type.String({ minLength: 1 }),
+  limit: Type.Optional(Type.Number({ minimum: 1, maximum: 20 })),
+});
+
+const SESSION_SEARCH_PARAMS = Type.Object({
+  query: Type.String({ minLength: 1 }),
+  limit: Type.Optional(Type.Number({ minimum: 1, maximum: 20 })),
+});
 
 export default function createPiMemoryExtension(pi: any) {
   const runtimeConfig = resolveRuntimeBehaviorConfig();
@@ -27,16 +43,12 @@ export default function createPiMemoryExtension(pi: any) {
         });
       }
 
-      if (runtimeConfig.autoRecall) {
-        const recall = await recallMemories({
-          projectPath,
-          storageBaseDir,
-          limit: runtimeConfig.recallLimit,
-        });
-        if (recall.items.length > 0) {
-          ctx.ui?.notify?.(formatMemoryRows("Relevant project memory", recall.items), "info");
-        }
-      }
+      await notifyAutoRecall({
+        ctx,
+        projectPath,
+        storageBaseDir,
+        runtimeConfig,
+      });
     } catch (error) {
       handleError(ctx, error, "Pi Memory session-start sync failed.");
     }
@@ -65,6 +77,91 @@ export default function createPiMemoryExtension(pi: any) {
     } catch (error) {
       handleError(ctx, error, "Pi Memory auto-ingest failed.");
     }
+  });
+
+  pi.registerTool({
+    name: "pi_memory_recall",
+    label: "Pi Memory Recall",
+    description: "Recall the most relevant stored project memories.",
+    promptSnippet: "Recall relevant stored project memories",
+    promptGuidelines: [
+      "Use this when the user asks what was discussed before, where work left off, or what should be remembered from prior sessions.",
+    ],
+    parameters: MEMORY_RECALL_PARAMS,
+    async execute(_toolCallId: string, params: { limit?: number }, _signal: AbortSignal | undefined, _onUpdate: unknown, ctx: any) {
+      const { projectPath, storageBaseDir } = resolveProjectContext(ctx.cwd);
+      await ensureProjectInitialized(projectPath, storageBaseDir);
+
+      const result = await recallMemories({
+        projectPath,
+        storageBaseDir,
+        limit: params.limit ?? runtimeConfig.recallLimit,
+      });
+
+      return {
+        content: [{ type: "text", text: formatMemoryRows("Relevant project memory", result.items) }],
+        details: { items: result.items },
+      };
+    },
+  });
+
+  pi.registerTool({
+    name: "pi_memory_search",
+    label: "Pi Memory Search",
+    description: "Search structured stored project memories.",
+    promptSnippet: "Search structured project memories",
+    promptGuidelines: [
+      "Use this for a specific remembered preference, decision, fact, task, or convention.",
+    ],
+    parameters: MEMORY_SEARCH_PARAMS,
+    async execute(_toolCallId: string, params: { query: string; limit?: number }, _signal: AbortSignal | undefined, _onUpdate: unknown, ctx: any) {
+      const { projectPath, storageBaseDir } = resolveProjectContext(ctx.cwd);
+      await ensureProjectInitialized(projectPath, storageBaseDir);
+
+      const result = await searchMemories({
+        projectPath,
+        storageBaseDir,
+        query: params.query.trim(),
+        limit: params.limit ?? 10,
+      });
+
+      return {
+        content: [{ type: "text", text: formatMemoryRows(`Pi Memory search: ${params.query.trim()}`, result.items) }],
+        details: { items: result.items, query: params.query.trim() },
+      };
+    },
+  });
+
+  pi.registerTool({
+    name: "pi_memory_search_sessions",
+    label: "Pi Memory Session Search",
+    description: "Search raw tracked Pi session history as a fallback.",
+    promptSnippet: "Search raw tracked session history as a fallback",
+    promptGuidelines: [
+      "Use this only if structured memory is insufficient and the user asks about prior conversation details.",
+    ],
+    parameters: SESSION_SEARCH_PARAMS,
+    async execute(_toolCallId: string, params: { query: string; limit?: number }, _signal: AbortSignal | undefined, _onUpdate: unknown, ctx: any) {
+      if (!runtimeConfig.rawSessionSearchEnabled) {
+        throw new Error("Raw session search is disabled by configuration.");
+      }
+
+      const { projectPath, storageBaseDir } = resolveProjectContext(ctx.cwd);
+      await ensureProjectInitialized(projectPath, storageBaseDir);
+
+      const result = await searchSessions({
+        projectPath,
+        storageBaseDir,
+        sessionDir: runtimeConfig.sessionDirOverride,
+        query: params.query.trim(),
+        limit: params.limit ?? 10,
+      });
+
+      return {
+        content: [{ type: "text", text: formatSessionSearchRows(`Pi Memory raw session search: ${params.query.trim()}`, result.items) }],
+        details: { items: result.items, query: params.query.trim() },
+      };
+    },
   });
 
   pi.registerCommand("pi-memory-init", {
@@ -326,6 +423,34 @@ export default function createPiMemoryExtension(pi: any) {
       }
     },
   });
+}
+
+async function notifyAutoRecall(options: {
+  ctx: any;
+  projectPath: string;
+  storageBaseDir: string;
+  runtimeConfig: ReturnType<typeof resolveRuntimeBehaviorConfig>;
+}): Promise<void> {
+  if (!options.runtimeConfig.autoRecall) {
+    return;
+  }
+
+  const recall = await recallMemories({
+    projectPath: options.projectPath,
+    storageBaseDir: options.storageBaseDir,
+    limit: options.runtimeConfig.recallLimit,
+  });
+
+  if (recall.items.length > 0) {
+    options.ctx.ui?.notify?.(formatMemoryRows("Relevant project memory", recall.items), "info");
+  }
+}
+
+async function ensureProjectInitialized(projectPath: string, storageBaseDir: string): Promise<void> {
+  const status = await getProjectStatus({ projectPath, storageBaseDir });
+  if (!status.initialized) {
+    throw new Error("Pi Memory is not initialized for this project. Run /pi-memory-init first.");
+  }
 }
 
 function handleError(ctx: any, error: unknown, fallbackMessage: string) {
