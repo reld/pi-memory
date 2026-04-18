@@ -32,6 +32,9 @@ The extension keeps automatic session-start recall concise and exposes explicit 
 
 - `/pi-memory-init`
 - `/pi-memory-status`
+- `/pi-memory-config`
+- `/pi-memory-config-set <key> <value>`
+- `/pi-memory-config-unset <key>`
 - `/pi-memory-ingest`
 - `/pi-memory-list`
 - `/pi-memory-search <query>`
@@ -51,6 +54,15 @@ Environment variables:
 - `PI_MEMORY_RECALL_LIMIT`
 - `PI_MEMORY_RAW_SESSION_SEARCH_ENABLED`
 - `PI_MEMORY_DEBUG`
+
+Stored global config file:
+- `~/.config/pi-memory/config.json`
+
+Effective config precedence:
+- explicit command input
+- environment variables
+- stored global config
+- defaults
 
 ## Package structure
 
@@ -90,6 +102,13 @@ Install locally in Pi with a path such as:
 ```bash
 pi install /absolute/path/to/pi-memory
 ```
+
+## Documentation
+
+- `docs/usage.md` — how to use the package day to day
+- `docs/extension-api.md` — Pi command/tool/config surface
+- `docs/backend-api.md` — JSON-over-stdio backend contract
+- `VALIDATION.md` — manual validation findings and current retrieval gaps
 
 See also:
 - `AGENTS.md`

@@ -91,7 +91,7 @@
 
 - [x] Define setup flow inside Pi
 - [x] Define `/pi-memory-init` behavior
-- [ ] Define configuration commands
+- [x] Define configuration commands
 - [x] Define memory inspection commands
 - [x] Define memory edit/delete/forget commands
 - [x] Define ingestion commands
