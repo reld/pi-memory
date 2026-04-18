@@ -74,6 +74,38 @@ func scanMemoryRows(rows *sql.Rows) ([]MemoryRow, error) {
 	return items, rows.Err()
 }
 
+func Recall(db *sql.DB, projectID string, limit int) ([]MemoryRow, error) {
+	if limit <= 0 {
+		limit = 5
+	}
+	rows, err := db.Query(`
+		SELECT memory_id, category, summary, details, status, confidence, importance, updated_at,
+		  (
+		    importance * confidence *
+		    CASE category
+		      WHEN 'constraint' THEN 1.00
+		      WHEN 'decision' THEN 0.95
+		      WHEN 'preference' THEN 0.90
+		      WHEN 'fact' THEN 0.70
+		      WHEN 'task' THEN 0.60
+		      ELSE 0.50
+		    END
+		  ) AS score
+		FROM memory_items
+		WHERE project_id = ?
+		  AND status = 'active'
+		  AND confidence >= 0.70
+		  AND importance >= 0.65
+		ORDER BY score DESC, importance DESC, updated_at DESC
+		LIMIT ?
+	`, projectID, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	return scanMemoryRowsWithScore(rows)
+}
+
 func scanMemoryRowsWithScore(rows *sql.Rows) ([]MemoryRow, error) {
 	items := []MemoryRow{}
 	for rows.Next() {

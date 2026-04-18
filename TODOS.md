@@ -125,7 +125,7 @@
 - [x] Add ingestion command(s)
 - [x] Add retrieval/search command(s)
 - [ ] Add memory management command(s)
-- [ ] Add session lifecycle hooks
+- [x] Add session lifecycle hooks
 - [ ] Add user-facing notifications and errors
 
 ## Phase 9 — Packaging and distribution

@@ -11,6 +11,7 @@ import type {
 } from "../types/project.ts";
 import type { IngestSessionsResult } from "../types/ingest.ts";
 import type { ListMemoriesResult, SearchMemoriesResult } from "../types/memory.ts";
+import type { RecallMemoriesResult } from "../types/recall.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const projectRoot = resolve(here, "../../..");
@@ -107,6 +108,14 @@ export async function searchMemories(payload: {
   limit?: number;
 }): Promise<SearchMemoriesResult> {
   return callBackend<SearchMemoriesResult>({ version: 1, command: "search_memories", payload });
+}
+
+export async function recallMemories(payload: {
+  projectPath: string;
+  storageBaseDir: string;
+  limit?: number;
+}): Promise<RecallMemoriesResult> {
+  return callBackend<RecallMemoriesResult>({ version: 1, command: "recall_memories", payload });
 }
 
 async function resolveBackendPath(): Promise<string> {

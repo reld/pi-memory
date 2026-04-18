@@ -1,9 +1,71 @@
-import { BackendError, getProjectStatus, ingestSessions, initProject, listMemories, searchMemories } from "./services/backend.ts";
+import { BackendError, getProjectStatus, ingestSessions, initProject, listMemories, recallMemories, searchMemories } from "./services/backend.ts";
+import { resolveRuntimeBehaviorConfig } from "./services/config.ts";
 import { resolveProjectContext } from "./services/project.ts";
 import { formatStatusBlock } from "./util/formatting.ts";
 import { formatMemoryRows } from "./util/memory-formatting.ts";
 
 export default function createPiMemoryExtension(pi: any) {
+  const runtimeConfig = resolveRuntimeBehaviorConfig();
+
+  pi.on("session_start", async (_event: unknown, ctx: any) => {
+    const { projectPath, storageBaseDir } = resolveProjectContext(ctx.cwd);
+
+    try {
+      const status = await getProjectStatus({ projectPath, storageBaseDir });
+      if (!status.initialized) {
+        return;
+      }
+
+      if (runtimeConfig.autoIngest) {
+        await ingestSessions({
+          projectPath,
+          storageBaseDir,
+          trigger: "session_start_catchup",
+          sessionDir: process.env.PI_MEMORY_SESSION_DIR,
+          activeSessionFile: ctx.sessionManager?.getSessionFile?.(),
+        });
+      }
+
+      if (runtimeConfig.autoRecall) {
+        const recall = await recallMemories({
+          projectPath,
+          storageBaseDir,
+          limit: runtimeConfig.recallLimit,
+        });
+        if (recall.items.length > 0) {
+          ctx.ui?.notify?.(formatMemoryRows("Relevant project memory", recall.items), "info");
+        }
+      }
+    } catch (error) {
+      handleError(ctx, error, "Pi Memory session-start sync failed.");
+    }
+  });
+
+  pi.on("turn_end", async (_event: unknown, ctx: any) => {
+    if (!runtimeConfig.autoIngest) {
+      return;
+    }
+
+    const { projectPath, storageBaseDir } = resolveProjectContext(ctx.cwd);
+
+    try {
+      const status = await getProjectStatus({ projectPath, storageBaseDir });
+      if (!status.initialized) {
+        return;
+      }
+
+      await ingestSessions({
+        projectPath,
+        storageBaseDir,
+        trigger: "auto_turn",
+        sessionDir: process.env.PI_MEMORY_SESSION_DIR,
+        activeSessionFile: ctx.sessionManager?.getSessionFile?.(),
+      });
+    } catch (error) {
+      handleError(ctx, error, "Pi Memory auto-ingest failed.");
+    }
+  });
+
   pi.registerCommand("pi-memory-init", {
     description: "Initialize Pi Memory for the current project",
     handler: async (_args: string, ctx: any) => {

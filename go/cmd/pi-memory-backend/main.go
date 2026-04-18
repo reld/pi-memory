@@ -42,6 +42,12 @@ type searchMemoriesPayload struct {
 	Limit          int    `json:"limit,omitempty"`
 }
 
+type recallMemoriesPayload struct {
+	ProjectPath    string `json:"projectPath"`
+	StorageBaseDir string `json:"storageBaseDir"`
+	Limit          int    `json:"limit,omitempty"`
+}
+
 func main() {
 	input, err := io.ReadAll(os.Stdin)
 	if err != nil {
@@ -163,6 +169,21 @@ func dispatch(req api.Request) api.Response {
 			return api.Failure("SEARCH_FAILED", err.Error(), nil)
 		}
 		return api.Success(map[string]any{"items": items})
+	case "recall_memories":
+		payload, fail := decodeRecallMemoriesPayload(req.Payload)
+		if fail != nil {
+			return *fail
+		}
+		projectResult, response := openProjectDB(payload.ProjectPath, payload.StorageBaseDir)
+		if response != nil {
+			return *response
+		}
+		defer projectResult.DB.Close()
+		items, err := memories.Recall(projectResult.DB, projectResult.Project.ProjectID, payload.Limit)
+		if err != nil {
+			return api.Failure("SEARCH_FAILED", err.Error(), nil)
+		}
+		return api.Success(map[string]any{"items": items})
 	default:
 		return api.Failure("COMMAND_NOT_IMPLEMENTED", fmt.Sprintf("Command %q is not implemented yet", req.Command), nil)
 	}
@@ -228,6 +249,20 @@ func decodeSearchMemoriesPayload(raw json.RawMessage) (*searchMemoriesPayload, *
 	}
 	if payload.Query == "" {
 		return nil, responsePtr(api.Failure("INVALID_QUERY", "query is required", nil))
+	}
+	return &payload, nil
+}
+
+func decodeRecallMemoriesPayload(raw json.RawMessage) (*recallMemoriesPayload, *api.Response) {
+	var payload recallMemoriesPayload
+	if len(raw) == 0 {
+		return nil, responsePtr(api.Failure("INVALID_PAYLOAD", "Missing payload", nil))
+	}
+	if err := json.Unmarshal(raw, &payload); err != nil {
+		return nil, responsePtr(api.Failure("INVALID_PAYLOAD", "Failed to parse payload", nil))
+	}
+	if payload.ProjectPath == "" {
+		return nil, responsePtr(api.Failure("INVALID_PROJECT_PATH", "projectPath is required", nil))
 	}
 	return &payload, nil
 }
