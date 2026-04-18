@@ -1,0 +1,35 @@
+{
+  "name": "pi-memory",
+  "version": "0.1.0",
+  "description": "Pi package providing per-project long-term memory with a TypeScript extension and Go backend.",
+  "keywords": ["pi-package"],
+  "license": "MIT",
+  "type": "module",
+  "files": [
+    "extensions",
+    "src",
+    "go",
+    "resources",
+    "scripts",
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build:go": "./scripts/build-go.sh",
+    "build": "npm run typecheck && npm run build:go"
+  },
+  "peerDependencies": {
+    "@mariozechner/pi-ai": "*",
+    "@mariozechner/pi-agent-core": "*",
+    "@mariozechner/pi-coding-agent": "*",
+    "@mariozechner/pi-tui": "*",
+    "@sinclair/typebox": "*"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  },
+  "pi": {
+    "extensions": ["./extensions"]
+  }
+}

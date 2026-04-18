@@ -105,8 +105,8 @@
 - [ ] Create Go module
 - [x] Define binary interface contract
 - [ ] Implement config loading
-- [ ] Implement DB initialization
-- [ ] Implement migrations
+- [x] Implement DB initialization
+- [x] Implement migrations
 - [ ] Implement ingestion bookkeeping
 - [ ] Implement algorithmic candidate extraction from session-derived input
 - [ ] Implement deterministic candidate scoring/filtering
@@ -117,7 +117,7 @@
 
 ## Phase 8 — TypeScript extension
 
-- [ ] Create extension scaffold
+- [x] Create extension scaffold
 - [ ] Add config loading/resolution
 - [ ] Add setup command
 - [ ] Add project DB resolution
@@ -164,13 +164,13 @@
 ## Phase 11 — Implementation roadmap / execution
 
 - [x] Define implementation roadmap by phase
-- [ ] Scaffold repository structure
-- [ ] Create `package.json` with Pi package metadata
-- [ ] Create VitePlus TS base config
-- [ ] Create thin `extensions/pi-memory.ts`
-- [ ] Create Go module and backend entrypoint
-- [ ] Implement Go JSON command dispatcher
-- [ ] Implement DB init + migrations
+- [x] Scaffold repository structure
+- [x] Create `package.json` with Pi package metadata
+- [x] Create VitePlus TS base config
+- [x] Create thin `extensions/pi-memory.ts`
+- [x] Create Go module and backend entrypoint
+- [x] Implement Go JSON command dispatcher
+- [x] Implement DB init + migrations
 - [ ] Implement TS backend wrapper
 - [ ] Wire `/pi-memory-init`
 - [ ] Wire `/pi-memory-status`
