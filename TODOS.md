@@ -120,8 +120,8 @@
 - [x] Create extension scaffold
 - [ ] Add config loading/resolution
 - [ ] Add setup command
-- [ ] Add project DB resolution
-- [ ] Add Go binary invocation wrapper
+- [x] Add project DB resolution
+- [x] Add Go binary invocation wrapper
 - [ ] Add ingestion command(s)
 - [ ] Add retrieval/search command(s)
 - [ ] Add memory management command(s)
@@ -171,6 +171,6 @@
 - [x] Create Go module and backend entrypoint
 - [x] Implement Go JSON command dispatcher
 - [x] Implement DB init + migrations
-- [ ] Implement TS backend wrapper
-- [ ] Wire `/pi-memory-init`
-- [ ] Wire `/pi-memory-status`
+- [x] Implement TS backend wrapper
+- [x] Wire `/pi-memory-init`
+- [x] Wire `/pi-memory-status`
