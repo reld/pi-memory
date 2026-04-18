@@ -16,8 +16,7 @@ Validated:
 Not fully validated in this pass:
 - live Pi model tool-choice behavior inside a real chat session
 - full end-to-end command UX inside Pi
-- rename/move edge cases
-- target-platform packaging/runtime validation
+- true cross-platform runtime validation on non-local target machines
 
 ## Environment
 
@@ -220,6 +219,96 @@ Current mapping behavior:
 Assessment:
 - **partial pass via static review**
 - should still be exercised end-to-end in Pi later
+
+## Rename/move edge case checks
+
+A controlled rename test was run using a temporary project under:
+- `.tmp-move-test/original-project`
+
+### Initial observed behavior
+
+Before the relink fix:
+1. `init_project` on the original path succeeded
+2. `project_status` on the original path returned `initialized: true`
+3. after renaming the directory to `.tmp-move-test/renamed-project`:
+   - `project_status` on the old path failed with `PROJECT_STATUS_FAILED` because the path no longer existed
+   - `project_status` on the new path returned `initialized: false`
+4. re-running `init_project` on the renamed path created a **second** registry entry and a second project DB
+
+That confirmed the original gap: rename/move broke path-based lookup and led to duplicate initialization.
+
+### Follow-up fix and retest
+
+A basic automatic relink flow was then implemented in `go/internal/projects/projects.go`.
+
+Current behavior after the fix:
+1. `init_project` on the original path succeeds
+2. after renaming the directory, `project_status` on the **new** path now returns `initialized: true`
+3. the existing registry entry is updated to point at the new path
+4. `project.json` is updated with:
+   - new `projectPath`
+   - `previousProjectPaths`
+   - `relinkedAt`
+5. re-running `init_project` on the renamed path no longer creates a duplicate DB; it resolves as already initialized
+
+Current limitation of the relink logic:
+- automatic relink only occurs when there is exactly **one** stale registry candidate with a valid `project.json` and `memory.db`
+- this is intentionally conservative basic relink support, not full multi-candidate repair logic
+
+Assessment:
+- **pass for basic rename/move relinking support**
+- the previously open rename/move validation gap is now covered for the simple single-stale-project case
+
+## Packaging/runtime validation
+
+### Package contents
+
+Dry-run packaging was inspected with:
+
+```bash
+npm pack --dry-run
+```
+
+Observed:
+- package includes `README.md`, `docs/`, `extensions/`, `src/`, `go/`, `resources/`, `scripts/`, and `dist/`
+- current package tarball includes:
+  - `dist/package/bin/pi-memory-backend`
+  - `resources/bin/darwin-arm64/pi-memory-backend`
+- an accidental extra `go/pi-memory-backend` binary was initially being included because `go/` is shipped wholesale
+- that accidental binary was removed from the repo during validation
+
+Assessment:
+- **partial pass**
+- package contents are broadly correct
+- package size is still fairly large because it currently ships both the built `dist` backend and a packaged resource binary
+
+### Runtime backend resolution order
+
+Configured resolver order in `src/extension/services/backend.ts`:
+1. `PI_MEMORY_BACKEND_PATH`
+2. `dist/package/bin/pi-memory-backend`
+3. `resources/bin/<platform>-<arch>/<binary>`
+
+Local checks performed:
+- direct execution of `dist/package/bin/pi-memory-backend` via `health` succeeded
+- direct execution of `resources/bin/darwin-arm64/pi-memory-backend` via `health` succeeded
+- simulated missing-binary state confirmed the expected candidate path set for `BACKEND_NOT_FOUND`
+
+Assessment:
+- **pass on current machine for resolver logic**
+
+### Resource binary layout
+
+Observed resource layout:
+- `resources/bin/darwin-arm64/` contains a real backend binary
+- `resources/bin/darwin-x64/` only contains `.gitkeep`
+- `resources/bin/linux-arm64/` only contains `.gitkeep`
+- `resources/bin/linux-x64/` only contains `.gitkeep`
+
+Assessment:
+- **not complete for target-platform distribution yet**
+- only the current local platform resource binary is present
+- cross-platform packaged binary coverage is still incomplete
 
 ## Key findings
 

@@ -60,6 +60,11 @@ func Init(input InitInput) (*InitResult, error) {
 	if existing := findByProjectPath(registry, projectPath); existing != nil {
 		return &InitResult{ProjectID: existing.ProjectID, ProjectDir: existing.ProjectDir, ProjectFile: existing.ProjectFile, DBPath: existing.DBPath, Created: false}, ErrAlreadyInitialized
 	}
+	if relinked, err := attemptRelink(registry, registryPath, projectPath); err != nil {
+		return nil, err
+	} else if relinked != nil {
+		return &InitResult{ProjectID: relinked.ProjectID, ProjectDir: relinked.ProjectDir, ProjectFile: relinked.ProjectFile, DBPath: relinked.DBPath, Created: false}, nil
+	}
 
 	name := strings.TrimSpace(input.ProjectName)
 	if name == "" {
@@ -130,11 +135,17 @@ func Get(projectPath, storageBaseDir string) (*GetResult, error) {
 	if err != nil {
 		return nil, err
 	}
-	registry, _, err := loadRegistry(storageBaseDir)
+	registry, registryPath, err := loadRegistry(storageBaseDir)
 	if err != nil {
 		return nil, err
 	}
 	entry := findByProjectPath(registry, projectPath)
+	if entry == nil {
+		entry, err = attemptRelink(registry, registryPath, projectPath)
+		if err != nil {
+			return nil, err
+		}
+	}
 	if entry == nil {
 		return &GetResult{Initialized: false}, nil
 	}
@@ -242,6 +253,71 @@ func findByProjectPath(registry *Registry, projectPath string) *RegistryEntry {
 		}
 	}
 	return nil
+}
+
+func attemptRelink(registry *Registry, registryPath, projectPath string) (*RegistryEntry, error) {
+	candidateIndex := -1
+	candidateCount := 0
+	for i := range registry.Projects {
+		entry := registry.Projects[i]
+		if entry.ProjectPath == projectPath {
+			return &registry.Projects[i], nil
+		}
+		if pathExists(entry.ProjectPath) {
+			continue
+		}
+		if !pathExists(entry.ProjectFile) || !pathExists(entry.DBPath) {
+			continue
+		}
+		candidateIndex = i
+		candidateCount++
+	}
+
+	if candidateCount != 1 || candidateIndex < 0 {
+		return nil, nil
+	}
+
+	now := now()
+	entry := &registry.Projects[candidateIndex]
+	previousPath := entry.ProjectPath
+	entry.ProjectPath = projectPath
+	entry.UpdatedAt = now
+
+	metadata, err := readProjectFile(entry.ProjectFile)
+	if err != nil {
+		return nil, err
+	}
+	if previousPath != "" && previousPath != projectPath && !containsString(metadata.PreviousProjectPaths, previousPath) {
+		metadata.PreviousProjectPaths = append(metadata.PreviousProjectPaths, previousPath)
+	}
+	metadata.ProjectPath = projectPath
+	metadata.UpdatedAt = now
+	metadata.RelinkedAt = now
+	metadata.LastOpenedAt = now
+	if err := writeJSON(entry.ProjectFile, metadata); err != nil {
+		return nil, err
+	}
+	if err := writeJSON(registryPath, registry); err != nil {
+		return nil, err
+	}
+	return entry, nil
+}
+
+func pathExists(path string) bool {
+	if strings.TrimSpace(path) == "" {
+		return false
+	}
+	_, err := os.Stat(path)
+	return err == nil
+}
+
+func containsString(values []string, want string) bool {
+	for _, value := range values {
+		if value == want {
+			return true
+		}
+	}
+	return false
 }
 
 func readProjectFile(path string) (*ProjectMetadata, error) {

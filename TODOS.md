@@ -150,7 +150,7 @@
 - [x] Test duplicate prevention
 - [~] Test retrieval relevance
 - [x] Test project isolation
-- [ ] Test rename/move edge cases
+- [x] Test rename/move edge cases
 - [~] Test extension/binary failure modes
 - [ ] Test packaging on target platforms
 - [x] Verify backend recall returns expected memories for the real project DB
