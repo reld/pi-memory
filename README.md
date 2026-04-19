@@ -81,11 +81,22 @@ vp run typecheck
 vp run build
 ```
 
-The Go build script places the backend at:
+The local development build places the backend at:
 
 ```text
 dist/package/bin/pi-memory-backend
 ```
+
+Packaged per-platform backend binaries are written to:
+
+```text
+resources/bin/<platform>-<arch>/pi-memory-backend
+```
+
+Runtime backend resolution order is:
+1. `PI_MEMORY_BACKEND_PATH`
+2. `resources/bin/<platform>-<arch>/<binary>`
+3. `dist/package/bin/<binary>`
 
 If needed, override backend resolution with:
 
@@ -102,6 +113,35 @@ Install locally in Pi with a path such as:
 ```bash
 pi install /absolute/path/to/pi-memory
 ```
+
+## First self-publish / test flow
+
+To prepare a package you can install on another machine:
+
+```bash
+vp run build
+vp run pack:dry-run
+npm pack
+```
+
+That gives you a tarball like:
+
+```text
+pi-memory-0.1.0.tgz
+```
+
+On the target machine, install it with:
+
+```bash
+pi install /absolute/path/to/pi-memory-0.1.0.tgz
+```
+
+Current packaged binary target for this first self-published version:
+- `darwin-arm64`
+
+Future versions can add more packaged targets.
+
+If your target machine is outside that target, build a backend there and set `PI_MEMORY_BACKEND_PATH`.
 
 ## Documentation
 

@@ -462,8 +462,8 @@ Extension-side wrapper errors may also surface:
 
 The TypeScript wrapper resolves the backend binary in this order:
 1. `PI_MEMORY_BACKEND_PATH`
-2. `dist/package/bin/pi-memory-backend`
-3. `resources/bin/<platform>-<arch>/<binary>`
+2. `resources/bin/<platform>-<arch>/<binary>`
+3. `dist/package/bin/<binary>`
 
 ## Debug logging
 

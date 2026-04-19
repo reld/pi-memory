@@ -182,8 +182,8 @@ async function resolveBackendPath(): Promise<string> {
   }
 
   const candidatePaths = [
-    join(projectRoot, "dist/package/bin/pi-memory-backend"),
     join(projectRoot, "resources/bin", `${mapPlatform()}-${mapArch()}`, binaryName()),
+    join(projectRoot, "dist/package/bin", binaryName()),
   ];
 
   for (const candidate of candidatePaths) {

@@ -13,14 +13,15 @@
     "go",
     "resources",
     "scripts",
-    "dist",
     "docs",
     "README.md"
   ],
   "scripts": {
     "typecheck": "tsc --noEmit",
     "build:go": "./scripts/build-go.sh",
-    "build": "npm run typecheck && npm run build:go"
+    "build:resources": "./scripts/build-resources.sh",
+    "build": "tsc --noEmit && ./scripts/build-go.sh && ./scripts/build-resources.sh",
+    "pack:dry-run": "npm pack --dry-run"
   },
   "peerDependencies": {
     "@mariozechner/pi-ai": "*",

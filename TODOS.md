@@ -128,7 +128,7 @@
 - [x] Add memory management command(s)
 - [x] Add session lifecycle hooks
 - [x] Add initial LLM-callable memory tools for on-demand retrieval
-- [~] Polish user-facing notifications and errors
+- [~] Polish user-facing notifications and errors (major error mapping done; remaining work is UX/message refinement)
 
 ## Phase 9 — Packaging and distribution
 
@@ -141,6 +141,7 @@
 - [x] Define local development workflow
 - [x] Confirm Option B + thin entrypoint approach
 - [x] Confirm VitePlus as chosen TS tooling
+- [x] Add first self-publish packaging flow with packaged `darwin-arm64` backend binary
 
 ## Phase 10 — Testing and validation
 
@@ -148,11 +149,11 @@
 - [x] Test DB creation in custom location
 - [x] Test ingestion on real Pi sessions
 - [x] Test duplicate prevention
-- [~] Test retrieval relevance
+- [~] Test retrieval relevance (substantial backend-level validation done; broad recall polish still remains)
 - [x] Test project isolation
 - [x] Test rename/move edge cases
-- [~] Test extension/binary failure modes
-- [ ] Test packaging on target platforms
+- [~] Test extension/binary failure modes (backend/static validation done; Pi-side end-to-end coverage still remains)
+- [~] Test packaging on target platforms (first `darwin-arm64` self-package is prepared; install/runtime validation on the work machine still remains)
 - [x] Verify backend recall returns expected memories for the real project DB
 - [x] Validate natural-language `remember ...` promotion into structured memory
 
