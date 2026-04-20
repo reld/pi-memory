@@ -52,14 +52,24 @@ Confirm:
 
 ## Tag and publish
 
-Commit everything needed for the release, then create and push the tag:
+Commit everything needed for the release, then create and push the tag.
+
+Recommended explicit sequence:
 
 ```bash
+git push origin main
 git tag v0.1.0
-git push origin main --tags
+git push origin v0.1.0
+```
+
+Verification step:
+
+```bash
+git ls-remote --tags origin
 ```
 
 Expected result:
+- [ ] the remote tag exists on GitHub
 - [ ] the publish workflow starts for the tag
 - [ ] workflow completes successfully
 - [ ] package version `0.1.0` appears in GitHub Packages for `@reld/pi-memory`
@@ -70,7 +80,7 @@ On the target machine:
 
 ### npm auth setup
 
-Add to `~/.npmrc`:
+Add this copy-paste block to `~/.npmrc`:
 
 ```text
 @reld:registry=https://npm.pkg.github.com

@@ -148,7 +148,7 @@ If your target machine is outside `darwin-arm64`, build a backend there and set 
 
 ## Installing the private package on another machine
 
-On the target machine, configure npm for the `@reld` scope in `~/.npmrc`:
+On the target machine, add this copy-paste block to `~/.npmrc`:
 
 ```text
 @reld:registry=https://npm.pkg.github.com

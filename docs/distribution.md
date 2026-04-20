@@ -55,7 +55,7 @@ If your setup also needs access to a private repository during related workflows
 
 ### 2. Configure npm to use GitHub Packages for `@reld`
 
-Add this to `~/.npmrc` on the work machine:
+Add this copy-paste block to `~/.npmrc` on the work machine:
 
 ```text
 @reld:registry=https://npm.pkg.github.com
