@@ -1556,6 +1556,99 @@ Session files are append-like historical input.
 The memory DB is derived state.
 If in doubt, prefer safe reprocessing with deduplication over risky skipping.
 
+## Private distribution strategy for the first publishable version
+
+Current decision:
+
+- keep the **source repo private** on GitHub under the `reld` account
+- do **not** distribute via Pi git install from the source repo
+- publish a **private npm-style package** to the **GitHub Packages npm registry**
+- use the package name **`@reld/pi-memory`**
+- ship the Pi extension as **TypeScript source**
+- ship the backend as a compiled **`darwin-arm64`** binary only for now
+- do **not** ship Go backend source in the published package
+- defer public npmjs publishing and pi.dev package-gallery concerns until after thorough testing
+
+Why this is the right fit now:
+
+- Pi git installs clone the whole repo, which would distribute source code we do not want to ship
+- Pi can load `.ts` extensions directly, so we do not need a TS transpilation pipeline just to publish a working package
+- a private npm-style package gives us a clean package boundary and avoids shipping the development repo
+- GitHub Packages gives us private distribution now while staying close to a future npmjs flow
+- the packaged backend binary is small enough that prebuilding and shipping it is practical
+
+Desired first private release flow:
+
+1. develop in the private source repo
+2. GitHub Actions validates the package on tag/release
+3. GitHub Actions builds the `darwin-arm64` backend binary
+4. GitHub Actions publishes the final package to GitHub Packages as `@reld/pi-memory`
+5. the work machine installs the package from the GitHub npm registry
+6. real usage/testing happens there before any public npm release
+
+Important implications:
+
+- the **source repo is not the install artifact**
+- the **published package** is the install artifact
+- published package contents should be runtime-oriented, not source-repo-oriented
+- the package should include the TS extension files needed at runtime, but exclude Go source and other dev-only files
+- runtime backend resolution should continue preferring packaged `resources/bin/...` artifacts over local dev `dist/...` output
+
+## Published package contents direction
+
+Current packaging intent for the private registry release:
+
+Include:
+
+- `extensions/`
+- `src/extension/` because the runtime TS entrypoint imports from there
+- `resources/bin/darwin-arm64/pi-memory-backend`
+- `docs/` if useful
+- `README.md`
+- `package.json`
+
+Exclude:
+
+- `go/`
+- dev-only helper notes like `HANDOFF.md`, `THOUGHTS.md`, `TODOS.md`, `VALIDATION.md`, `TESTING.md`
+- unnecessary build outputs such as `dist/`
+- scripts that are only needed for development/release and not runtime
+
+Important nuance:
+
+- TypeScript extension files are part of the runtime artifact in this project
+- Go source is not; only the compiled backend binary should ship
+
+## GitHub Actions direction for releases
+
+Current preference:
+
+- add a **GitHub Actions release pipeline** that publishes to GitHub Packages
+- also add CI-style validation checks so release publishing is reproducible and low-risk
+
+Reasonable first pipeline scope:
+
+- trigger validation on pushes/PRs to main
+- trigger publish flow on tags like `v*`
+- run TypeScript typecheck
+- build the Go backend resource binary for `darwin-arm64`
+- verify expected package contents with `npm pack --dry-run`
+- publish `@reld/pi-memory` to GitHub Packages
+- optionally create a GitHub Release and attach the packed tarball for inspection/debugging convenience
+
+Registry/auth direction to plan explicitly:
+
+- GitHub Packages npm registry for the `@reld` scope
+- source repo publishes using `GITHUB_TOKEN` or a package-publish-capable token
+- work machine needs npm auth/registry config for installing private `@reld/*` packages
+
+Longer-term path:
+
+- once the package is well tested privately, we can decide whether to:
+  1. publish the same package publicly to npmjs
+  2. keep the same scope/name if available there
+  3. add gallery metadata and optimize for pi.dev package discovery later
+
 ## Safety net: raw session search fallback
 
 In addition to structured memory retrieval, the system should support a fallback path that searches the project's raw Pi session history directly.

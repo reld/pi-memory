@@ -142,6 +142,16 @@
 - [x] Confirm Option B + thin entrypoint approach
 - [x] Confirm VitePlus as chosen TS tooling
 - [x] Add first self-publish packaging flow with packaged `darwin-arm64` backend binary
+- [x] Decide that the first private distribution path is a package publish to GitHub Packages, not a git install from the source repo
+- [x] Decide to ship the extension as runtime TypeScript source and the backend as a compiled binary
+- [x] Decide to exclude Go backend source from the published package
+- [x] Rename package to `@reld/pi-memory`
+- [x] Define the exact private install/update flow using GitHub Packages
+- [x] Define required npm registry/auth setup for private `@reld` package installs
+- [x] Trim published package contents to runtime artifacts only
+- [x] Add GitHub Actions workflow for typecheck + backend/package validation
+- [x] Add GitHub Actions workflow for tagged releases to GitHub Packages
+- [x] Define first release tagging/versioning flow for private installs
 
 ## Phase 10 — Testing and validation
 
@@ -153,7 +163,7 @@
 - [x] Test project isolation
 - [x] Test rename/move edge cases
 - [~] Test extension/binary failure modes (backend/static validation done; Pi-side end-to-end coverage still remains)
-- [~] Test packaging on target platforms (first `darwin-arm64` self-package is prepared; install/runtime validation on the work machine still remains)
+- [~] Test packaging on target platforms (first `darwin-arm64` private package plan is defined; install/runtime validation from GitHub Packages on the work machine still remains)
 - [x] Verify backend recall returns expected memories for the real project DB
 - [x] Validate natural-language `remember ...` promotion into structured memory
 
@@ -165,6 +175,10 @@
 - [x] Define the TS↔Go communication model
 - [x] Define project identity and DB path rules
 - [x] Define `projects.json` vs `project.json` responsibilities
+- [x] Write down the private release/install plan before implementing it
+- [x] Design the first GitHub Actions release/check workflow before coding it
+- [x] Define the exact published package file list and package.json changes
+- [x] Implement package rename + package-contents cleanup for GitHub Packages publishing
 
 ## Phase 11 — Implementation roadmap / execution
 

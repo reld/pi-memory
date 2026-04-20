@@ -1,0 +1,58 @@
+name: Publish Package
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  publish-github-packages:
+    runs-on: macos-latest
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          registry-url: https://npm.pkg.github.com
+          scope: "@reld"
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go/go.mod
+          cache-dependency-path: go/go.sum
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build backend and packaged resources
+        run: npm run build
+
+      - name: Verify published package contents
+        run: npm pack --dry-run
+
+      - name: Create package tarball
+        run: npm pack
+
+      - name: Upload package tarball artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-package-tarball
+          path: reld-pi-memory-*.tgz
+
+      - name: Publish to GitHub Packages
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

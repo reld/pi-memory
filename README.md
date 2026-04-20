@@ -66,11 +66,17 @@ Effective config precedence:
 
 ## Package structure
 
+Development repo:
 - `extensions/pi-memory.ts` — thin package entrypoint
 - `src/extension/` — Pi extension implementation
-- `go/` — Go backend
-- `dist/package/bin/` — built backend binary output
+- `go/` — Go backend source
+- `dist/package/bin/` — local development backend binary output
 - `resources/bin/` — packaged platform binary layout
+
+Published package intent:
+- include runtime TypeScript extension files
+- include packaged backend binaries under `resources/bin/`
+- exclude Go backend source from the published package
 
 ## Development
 
@@ -114,34 +120,48 @@ Install locally in Pi with a path such as:
 pi install /absolute/path/to/pi-memory
 ```
 
-## First self-publish / test flow
+## Private package publishing direction
 
-To prepare a package you can install on another machine:
+Current private distribution target:
+- GitHub Packages npm registry
+- package name: `@reld/pi-memory`
+- packaged backend target: `darwin-arm64`
 
-```bash
-vp run build
-vp run pack:dry-run
-npm pack
-```
+The release flow is:
+1. push source changes
+2. create/push a version tag such as `v0.1.0`
+3. GitHub Actions validates and publishes the package to GitHub Packages
 
-That gives you a tarball like:
+The published package ships:
+- the TypeScript extension runtime files
+- the compiled backend binary
+
+It does not ship:
+- Go backend source
+- other development-only repo files
+
+If your target machine is outside `darwin-arm64`, build a backend there and set `PI_MEMORY_BACKEND_PATH`.
+
+## Installing the private package on another machine
+
+On the target machine, configure npm for the `@reld` scope in `~/.npmrc`:
 
 ```text
-pi-memory-0.1.0.tgz
+@reld:registry=https://npm.pkg.github.com
+//npm.pkg.github.com/:_authToken=YOUR_GITHUB_TOKEN
 ```
 
-On the target machine, install it with:
+The token should be able to read private packages.
+
+Then install the package in Pi with an explicit version such as:
 
 ```bash
-pi install /absolute/path/to/pi-memory-0.1.0.tgz
+pi install npm:@reld/pi-memory@0.1.0
 ```
 
-Current packaged binary target for this first self-published version:
-- `darwin-arm64`
-
-Future versions can add more packaged targets.
-
-If your target machine is outside that target, build a backend there and set `PI_MEMORY_BACKEND_PATH`.
+For more detailed release/install notes, see:
+- `docs/distribution.md`
+- `docs/release-checklist.md`
 
 ## Documentation
 

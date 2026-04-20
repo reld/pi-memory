@@ -1,5 +1,5 @@
 {
-  "name": "pi-memory",
+  "name": "@reld/pi-memory",
   "version": "0.1.0",
   "description": "Pi package providing per-project long-term memory with a TypeScript extension and Go backend.",
   "keywords": [
@@ -9,10 +9,8 @@
   "type": "module",
   "files": [
     "extensions",
-    "src",
-    "go",
+    "src/extension",
     "resources",
-    "scripts",
     "docs",
     "README.md"
   ],
@@ -32,6 +30,9 @@
   },
   "devDependencies": {
     "typescript": "^5.9.3"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
   },
   "pi": {
     "extensions": [
