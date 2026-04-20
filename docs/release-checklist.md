@@ -25,7 +25,7 @@ Those should match.
 - [ ] `package.json` version is correct
 - [ ] package name is `@reld/pi-memory`
 - [ ] published `files` list still matches intended runtime contents
-- [ ] `resources/bin/darwin-arm64/pi-memory-backend` exists and is up to date
+- [ ] local build or CI build will produce `resources/bin/darwin-arm64/pi-memory-backend` for the package publish
 - [ ] README/distribution docs reflect the current install flow
 
 ### Local validation
@@ -42,7 +42,7 @@ Confirm:
 - [ ] backend build passes
 - [ ] `npm pack --dry-run` shows the expected package contents
 - [ ] Go source is not included in the package
-- [ ] packaged backend binary is included
+- [ ] packaged backend binary is included in the dry-run package output
 
 ### GitHub workflow readiness
 

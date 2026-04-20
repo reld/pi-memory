@@ -78,6 +78,10 @@ Published package intent:
 - include packaged backend binaries under `resources/bin/`
 - exclude Go backend source from the published package
 
+Source-repo note:
+- packaged backend binaries are build artifacts and are not intended to stay committed in the source repo
+- local builds may populate `resources/bin/...`, but GitHub Actions is responsible for building them for package publication
+
 ## Development
 
 Build and validate:

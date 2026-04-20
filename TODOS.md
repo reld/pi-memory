@@ -145,6 +145,7 @@
 - [x] Decide that the first private distribution path is a package publish to GitHub Packages, not a git install from the source repo
 - [x] Decide to ship the extension as runtime TypeScript source and the backend as a compiled binary
 - [x] Decide to exclude Go backend source from the published package
+- [x] Decide that packaged backend binaries are build artifacts and do not stay committed in the source repo
 - [x] Rename package to `@reld/pi-memory`
 - [x] Define the exact private install/update flow using GitHub Packages
 - [x] Define required npm registry/auth setup for private `@reld` package installs

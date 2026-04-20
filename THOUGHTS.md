@@ -1592,6 +1592,7 @@ Important implications:
 - the **published package** is the install artifact
 - published package contents should be runtime-oriented, not source-repo-oriented
 - the package should include the TS extension files needed at runtime, but exclude Go source and other dev-only files
+- packaged backend binaries are build artifacts and do not need to remain committed in the source repo
 - runtime backend resolution should continue preferring packaged `resources/bin/...` artifacts over local dev `dist/...` output
 
 ## Published package contents direction
